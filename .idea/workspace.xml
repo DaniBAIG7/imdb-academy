@@ -82,22 +82,11 @@
       <workItem from="1649320416345" duration="1076000" />
       <workItem from="1649321694159" duration="7075000" />
       <workItem from="1649412080798" duration="330000" />
-      <workItem from="1649412475866" duration="108000" />
+      <workItem from="1649412475866" duration="378000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/IndexController.java</url>
-          <line>22</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
