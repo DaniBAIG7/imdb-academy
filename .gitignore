@@ -1,2 +1,4 @@
 title.basics.tsv
 title.ratings.tsv
+.DS_Store
+*.class
