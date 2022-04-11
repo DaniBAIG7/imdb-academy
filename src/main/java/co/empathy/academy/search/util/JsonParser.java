@@ -19,7 +19,12 @@ public class JsonParser {
         var builder = Json.createObjectBuilder();
 
         for(int i = 0; i < fields.length; i++) {
-            builder.add(fields[i], jsonFields[i]);
+            if(i == 4) {
+                boolean toAdd = Integer.parseInt(jsonFields[i]) == 1;
+                builder.add(fields[i], toAdd);
+            } else {
+                builder.add(fields[i], jsonFields[i]);
+            }
         }
 
         return builder.build();
