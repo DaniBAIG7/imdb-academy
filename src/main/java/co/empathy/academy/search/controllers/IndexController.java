@@ -13,11 +13,15 @@ import java.util.List;
 @RestController
 public class IndexController {
 
+    /**
+     * This method answers a get petition to index the document. Firstly it creates an index, then it applies a
+     * mapping an finally indexes all the documents contained in the films .tsv.
+     */
     @GetMapping("/index_documents")
     public void indexDocuments() {
         try {
 
-            ClientCustomConfiguration.getClient().indices().delete(i -> i.index("films"));
+            ClientCustomConfiguration.getClient().indices().delete(i -> i.index("films")); //TODO delete this
 
             ClientCustomConfiguration.getClient().indices().create(i -> i.index("films"));
 
@@ -46,14 +50,22 @@ public class IndexController {
 
             TsvReader r = new TsvReader();
 
-            while (r.isOpen()) {
+            while (r.isOpen()) {//The custom TSVReader has not read a
 
-                ClientCustomConfiguration.getClient().bulk(_0 -> _0.index("films")
+                var a = ClientCustomConfiguration.getClient().bulk(_0 -> _0
                         .operations(r.readSeveral().entrySet().stream().map(_1 -> BulkOperation.of(
-                                _2 -> _2.create(_3 -> _3.index("films")
+                                _2 -> _2.index(_3 -> _3.index("films")
                                         .id(_1.getKey())
                                         .document(_1.getValue()))
                         )).toList()));
+
+
+                    if(a.errors()) {
+                      for(var d: a.items()) {
+                        if(d.error() != null)
+                            System.out.println(d.error().reason());
+                    }
+                }
             }
 
 

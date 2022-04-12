@@ -11,11 +11,15 @@ import java.util.Map;
 
 public class TsvReader {
 
-    private final int BATCH_OPS = 1500;
+    private final int BATCH_OPS = 10000;
     private BufferedReader r;
     private boolean open;
     private JsonParser jParser;
 
+    /**
+     * The constructor of this class creates the whole Adapter structure.
+     * It creates a BufferedReader (the adaptee) and sets the reader to Open status.
+     */
     public TsvReader() {
         try {
             r = new BufferedReader(new FileReader("src/main/resources/static/title.basics.tsv"));
@@ -30,6 +34,15 @@ public class TsvReader {
         }
     }
 
+    /**
+     * This method of the Reader does a limited reading of X documents (specified as a final parameter in the class).
+     * The current value for reading is 10000 lines. This is done for building Bulk Operations later.
+     *
+     * readSeveral() is conceived to be called several times; So whenever TSVReader reads a null line, TSVReader is
+     * set to Closed.
+     *
+     * @return a Map with String keys (IDs of the documents) and with JsonObject values (the values to index)
+     */
     public Map<String, JsonObject> readSeveral() {
         Map<String, JsonObject> toRet = new HashMap<>();
         try {
@@ -37,8 +50,7 @@ public class TsvReader {
             for(int i = 0; i < BATCH_OPS; i++) {
                 String readline;
                 if((readline = r.readLine()) != null) {
-                    JsonObject job = jParser.of(readline);
-                    toRet.put(String.valueOf(job.get("tconst")), job);
+                    toRet.putAll(jParser.of(readline));
                 } else {
                     this.r.close();
                     setOpen(false);
