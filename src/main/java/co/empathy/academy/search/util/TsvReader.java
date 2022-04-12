@@ -11,12 +11,20 @@ import java.util.Map;
 
 public class TsvReader {
 
+    private final int BATCH_OPS = 1500;
     private BufferedReader r;
     private boolean open;
+    private JsonParser jParser;
 
     public TsvReader() {
         try {
             r = new BufferedReader(new FileReader("src/main/resources/static/title.basics.tsv"));
+            setOpen(true);
+            try {
+                this.jParser = new JsonParser(this.r.readLine().split("\t"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -25,15 +33,15 @@ public class TsvReader {
     public Map<String, JsonObject> readSeveral() {
         Map<String, JsonObject> toRet = new HashMap<>();
         try {
-            JsonParser jParser = new JsonParser(this.r.readLine().split("\t"));
 
-            for(int i = 0; i < 1000; i++) {
+            for(int i = 0; i < BATCH_OPS; i++) {
                 String readline;
                 if((readline = r.readLine()) != null) {
                     JsonObject job = jParser.of(readline);
                     toRet.put(String.valueOf(job.get("tconst")), job);
                 } else {
                     this.r.close();
+                    setOpen(false);
                     break;
                 }
             }
@@ -51,7 +59,7 @@ public class TsvReader {
         this.open = b;
     }
 
-    public boolean getOpen() {
+    public boolean isOpen() {
         return this.open;
     }
 

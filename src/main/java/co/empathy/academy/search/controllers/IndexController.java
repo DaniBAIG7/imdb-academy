@@ -1,18 +1,8 @@
 package co.empathy.academy.search.controllers;
 
-import co.elastic.clients.elasticsearch._types.mapping.BooleanProperty;
-import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
-import co.elastic.clients.elasticsearch.core.bulk.BulkOperationBase;
-import co.elastic.clients.elasticsearch.core.bulk.BulkOperationVariant;
-import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
-import co.empathy.academy.search.util.JsonParser;
 import co.empathy.academy.search.util.TsvReader;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +13,7 @@ import java.util.List;
 @RestController
 public class IndexController {
 
-    @PutMapping("/index_documents")
+    @GetMapping("/index_documents")
     public void indexDocuments() {
         try {
 
@@ -55,6 +45,16 @@ public class IndexController {
             );
 
             TsvReader r = new TsvReader();
+
+            while (r.isOpen()) {
+
+                ClientCustomConfiguration.getClient().bulk(_0 -> _0.index("films")
+                        .operations(r.readSeveral().entrySet().stream().map(_1 -> BulkOperation.of(
+                                _2 -> _2.create(_3 -> _3.index("films")
+                                        .id(_1.getKey())
+                                        .document(_1.getValue()))
+                        )).toList()));
+            }
 
 
         } catch (IOException e) {
