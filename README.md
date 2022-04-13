@@ -27,7 +27,7 @@ docker.elastic.co/elasticsearch/elasticsearch:7.16.2
 ```
 By doing that, we have the container running with the necessary version of ElasticSearch.
 
-There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in (this link)[https://datasets.imdbws.com/];_title\_basics.tsv_ and _title\_ratings.tsv_.
+There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in [this link](https://datasets.imdbws.com/); _title\_basics.tsv_ and _title\_ratings.tsv_.
 After downloading them, they must be placed in the project folder **src/main/resources/static**.
 
 Finally, the last thing remaining is to launch the project using Maven, for which we use the command
