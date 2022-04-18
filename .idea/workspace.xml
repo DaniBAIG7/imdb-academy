@@ -59,6 +59,7 @@
       <recent name="$PROJECT_DIR$/src/main/resources/static" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="co.empathy.academy.search.controllers" />
       <recent name="co.empathy.academy.search.util" />
     </key>
   </component>
@@ -86,7 +87,14 @@
       <workItem from="1649660665846" duration="14939000" />
       <workItem from="1649676762870" duration="1973000" />
       <workItem from="1649679128577" duration="78000" />
-      <workItem from="1649748009210" duration="12272000" />
+      <workItem from="1649748009210" duration="12407000" />
+      <workItem from="1649836315691" duration="10000" />
+      <workItem from="1649843655466" duration="176000" />
+      <workItem from="1649843872881" duration="564000" />
+      <workItem from="1649844617528" duration="967000" />
+      <workItem from="1649846168845" duration="655000" />
+      <workItem from="1649847067266" duration="2087000" />
+      <workItem from="1650266190305" duration="6134000" />
     </task>
     <servers />
   </component>
@@ -94,15 +102,6 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/IndexController.java</url>
-          <line>63</line>
-          <option name="timeStamp" value="16" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="java.util.HashMap$Node" memberName="key" />

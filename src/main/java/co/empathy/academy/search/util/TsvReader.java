@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class TsvReader {
 
-    private final int BATCH_OPS = 10000;
+    private static final int BATCH_OPS = 10000;
     private BufferedReader r;
     private boolean open;
     private JsonParser jParser;
