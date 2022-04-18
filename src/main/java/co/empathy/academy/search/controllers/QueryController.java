@@ -31,7 +31,7 @@ import java.util.Map;
 public class QueryController {
 
     @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")})
-    @Operation(summary = "")
+    @Operation(summary = "Throws a terms query for a given index. Requires a field and several terms to match it.")
     @GetMapping("/terms/{index}/_search")
     public List<Map<String, Object>> termsQuery(@PathVariable String index, @RequestParam String field, @RequestParam String values)  {
         String[] valuesArray = values.split(",");
@@ -41,12 +41,16 @@ public class QueryController {
     }
 
     @GetMapping("/term/{index}/_search")
+    @ApiResponse(responseCode = "200", description = "Term query result", content = { @Content(mediaType = "application/json")})
+    @Operation(summary = "Throws a term query for a given index. Requires a field and a term to match it.")
     public List<Map<String, Object>> termQuery(@PathVariable String index, @RequestParam String field, @RequestParam String value) {
         var q = QueryBuilders.term().field(field).value(value).build();
         return launchQuery(new Query(q), index);
     }
 
     @GetMapping("/multimatch/{index}/_search")
+    @ApiResponse(responseCode = "200", description = "Multimatch query result", content = { @Content(mediaType = "application/json")})
+    @Operation(summary = "Throws a multimatch query for a given index. Requires several fields and a value to match them.")
     public List<Map<String, Object>> multiMatchQuery(@PathVariable String index, @RequestParam String fields, @RequestParam String value) {
         String[] fieldsArray = fields.split(",");
         var q = QueryBuilders.multiMatch().fields(Arrays.stream(fieldsArray).toList()).query(value).build();
