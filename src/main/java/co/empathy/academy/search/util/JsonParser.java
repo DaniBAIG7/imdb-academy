@@ -24,7 +24,7 @@ public class JsonParser {
      * @param line of the document (tsv) to be parsed to a Json
      * @return a map that bounds a String (key of the document) with a whole Json to be added to the document
      */
-    public Map<String, JsonObject> of(String line) {
+    public JsonReference parse(String line) {
         String[] jsonFields = line.split("\t");
 
         var builder = Json.createObjectBuilder();
@@ -46,6 +46,6 @@ public class JsonParser {
             }
         }
 
-        return Map.of(jsonFields[0], builder.build());
+        return new JsonReference(jsonFields[0], builder.build());
     }
 }

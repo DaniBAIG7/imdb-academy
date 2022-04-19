@@ -1,20 +1,24 @@
 package co.empathy.academy.search.controllers;
 
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.IndexState;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
-import co.empathy.academy.search.util.TsvReader;
+import co.empathy.academy.search.util.JsonParser;
+import co.empathy.academy.search.util.JsonReference;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.json.JsonObject;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Tag(name = "Index controller", description = "Allows the creation and deletion of indexes, as well as document indexing for certain," +
         "locally stored TSV with all the information to be used in the subsequent searches to ElasticClient")
@@ -28,9 +32,16 @@ public class IndexController {
     @GetMapping("/index_documents")
     @ApiResponse(responseCode = "200", description = "Mapping done", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "answers a get petition to index the document. Firstly it creates an index, then it applies a" +
-            " mapping an finally indexes all the documents contained in the films .tsv.")
+            " mapping an finally indexes all the documents contained in the films .tsv, whose path must be provided via get" +
+            " parameter.")
     public void indexDocuments() {
         try {
+
+            Thread bulkOperationTask = new Thread() {
+                public void run() {
+                    bulkOperations("/Users/danibaig/Desktop/academy/imdb-academy/imdb-academy/src/main/resources/static/title.basics.tsv");
+                }
+            };
 
             ClientCustomConfiguration.getClient().indices().delete(i -> i.index("films")); //TODO delete this
 
@@ -38,7 +49,7 @@ public class IndexController {
 
             ClientCustomConfiguration.getClient().indices().putMapping(_0 -> _0.index("films")
                     .properties("titleType", _1 -> _1
-                            .text(_2 -> _2))
+                            .keyword(_2 -> _2))
                     .properties("primaryTitle", _1 -> _1
                             .text(_2 -> _2
                                     .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
@@ -56,29 +67,10 @@ public class IndexController {
                     .properties("runtimeMinutes", _1 -> _1
                             .integer(_2 -> _2.index(false)))
                     .properties("genres", _1 -> _1
-                            .text(_2 -> _2.analyzer("english")))
+                            .keyword(_2 -> _2))
             );
 
-            TsvReader r = new TsvReader();
-
-            while (r.isOpen()) {//The custom TSVReader has not read a
-
-                var a = ClientCustomConfiguration.getClient().bulk(_0 -> _0
-                        .operations(r.readSeveral().entrySet().stream().map(_1 -> BulkOperation.of(
-                                _2 -> _2.index(_3 -> _3.index("films")
-                                        .id(_1.getKey())
-                                        .document(_1.getValue()))
-                        )).toList()));
-
-
-                    if(a.errors()) {
-                      for(var d: a.items()) {
-                        if(d.error() != null)
-                            System.out.println(d.error().reason());
-                    }
-                }
-            }
-
+            bulkOperationTask.start(); //Starts the bulk operation thread so navigator won't get stuck without response
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -133,6 +125,82 @@ public class IndexController {
             System.out.println(i.getStackTrace());
             return false;
         }
+    }
+
+    private void bulkOperations(String tsvPath) {
+        final double BULK_OPERATIONS = 50000;
+
+        List<String> parsedDocument = null;
+        try {
+            parsedDocument = Files.readAllLines(Path.of(tsvPath));
+            System.out.println("Document read");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        JsonParser jParser = new JsonParser(parsedDocument.get(0).split("\t"));
+
+        int documentLength = parsedDocument.size();
+
+        List<List<String>> taskPool = new ArrayList<>();
+
+        int lastIndex = 1;
+        final int TASKS = 10;
+        while((lastIndex + documentLength/TASKS) < documentLength) {
+            taskPool.add(parsedDocument.subList(lastIndex, lastIndex + documentLength/TASKS));
+            lastIndex += documentLength/TASKS;
+        }
+        if(lastIndex < documentLength) {
+            taskPool.add(parsedDocument.subList(lastIndex, documentLength));
+        }
+
+        System.out.println("Everything splitted!");
+
+        taskPool.parallelStream().forEach((task) -> {
+            List<JsonReference> subset = new LinkedList<>();
+            long documentsIndexed = 0;
+            for (String s : task) {
+                subset.add(jParser.parse(s));
+                documentsIndexed++;
+
+                if (BULK_OPERATIONS / subset.size() == 1.0 || documentLength == documentsIndexed) {
+                    launchBulk(subset);
+                    subset = new LinkedList<>();
+                }
+
+            }
+        });
+
+
+        /*List<JsonReference> subset = new LinkedList<>();
+        long documentsIndexed = 0;
+        for(int i = 1; i < documentLength; i++) {
+            subset.add(jParser.parse(parsedDocument.get(i)));
+            documentsIndexed++;
+
+            if(BULK_OPERATIONS / subset.size() == 1.0 || documentLength == documentsIndexed) {
+                launchBulk(subset);
+                subset = new LinkedList<>();
+            }
+
+        }*/
+
+
+    }
+
+    private void launchBulk(List<JsonReference> subset) {
+        BulkResponse bulkResponse = null;
+        try {
+            bulkResponse = ClientCustomConfiguration.getClient().bulk(_0 -> _0
+                    .operations(subset.stream().map(_1 -> BulkOperation.of(
+                            _2 -> _2.index(_3 -> _3.index("films")
+                                    .id(_1.getId())
+                                    .document(_1.getJson()))
+                    )).toList()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Done bulk");
     }
 
 }
