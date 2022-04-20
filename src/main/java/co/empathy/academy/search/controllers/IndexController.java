@@ -128,7 +128,7 @@ public class IndexController {
     }
 
     private void bulkOperations(String tsvPath) {
-        final double BULK_OPERATIONS = 50000;
+        final int BULK_OPERATIONS = 250000;
 
         List<String> parsedDocument = null;
         try {
@@ -142,50 +142,30 @@ public class IndexController {
 
         int documentLength = parsedDocument.size();
 
-        List<List<String>> taskPool = new ArrayList<>();
-
+        List<JsonReference> subset;
+        int documentsIndexed = 0;
         int lastIndex = 1;
-        final int TASKS = 10;
-        while((lastIndex + documentLength/TASKS) < documentLength) {
-            taskPool.add(parsedDocument.subList(lastIndex, lastIndex + documentLength/TASKS));
-            lastIndex += documentLength/TASKS;
-        }
-        if(lastIndex < documentLength) {
-            taskPool.add(parsedDocument.subList(lastIndex, documentLength));
-        }
 
-        System.out.println("Everything splitted!");
+        while(documentsIndexed < documentLength) {
 
-        taskPool.parallelStream().forEach((task) -> {
-            List<JsonReference> subset = new LinkedList<>();
-            long documentsIndexed = 0;
-            for (String s : task) {
-                subset.add(jParser.parse(s));
-                documentsIndexed++;
+            int newIndex = lastIndex + BULK_OPERATIONS;
+            boolean lastBatch = false;
 
-                if (BULK_OPERATIONS / subset.size() == 1.0 || documentLength == documentsIndexed) {
-                    launchBulk(subset);
-                    subset = new LinkedList<>();
-                }
-
+            if(newIndex > (documentLength - 1)) {
+                newIndex = documentLength - 1;
+                lastBatch = true;
             }
-        });
 
+            subset = parsedDocument.subList(lastIndex, newIndex)
+                    .stream().map(jParser::parse).toList();
 
-        /*List<JsonReference> subset = new LinkedList<>();
-        long documentsIndexed = 0;
-        for(int i = 1; i < documentLength; i++) {
-            subset.add(jParser.parse(parsedDocument.get(i)));
-            documentsIndexed++;
-
-            if(BULK_OPERATIONS / subset.size() == 1.0 || documentLength == documentsIndexed) {
+            if(BULK_OPERATIONS / subset.size() == 1.0 || lastBatch) {
                 launchBulk(subset);
-                subset = new LinkedList<>();
+                lastIndex += BULK_OPERATIONS;
+                documentsIndexed += BULK_OPERATIONS;
             }
 
-        }*/
-
-
+        }
     }
 
     private void launchBulk(List<JsonReference> subset) {
