@@ -73,24 +73,29 @@ public class JsonParser {
      * @return a JsonReference result of the combination of the two TSV lines
      * @throws NoRatingsException
      */
-    public JsonReference biParse(String line1, String line2) throws NoRatingsException {
+    public JsonReference biParse(String line1, Optional<String> line2) throws NoRatingsException {
         if(ratingsFieldsOpt.isEmpty()) {
             throw new NoRatingsException();
         }
 
-        //Parseo de la parte de films
-        var filmsBuilder = parseFilmsBuilder(line1.split("\t"));
+        String[] filmsJsonFields = line1.split("\t");
 
-        //Parseo de la parte de ratings
-        String[] ratingsJsonFields = line2.split("\t");
+        //Parseo de la parte de films
+        var filmsBuilder = parseFilmsBuilder(filmsJsonFields);
 
         String[] ratingsFields = ratingsFieldsOpt.get();
-        for(int i = 1; i < ratingsFields.length; i++) {
-            filmsBuilder.add(ratingsFields[i], ratingsJsonFields[i]);
+        if(line2.isEmpty()) {
+            filmsBuilder.add(ratingsFields[1], "0");
+            filmsBuilder.add(ratingsFields[2], "0");
+        } else {
+            String[] ratingsJsonFields = line2.get().split("\t");
+            for(int i = 1; i < ratingsFields.length; i++) {
+                filmsBuilder.add(ratingsFields[i], ratingsJsonFields[i]);
+            }
         }
 
         //Combinación de los dos ratings
-        return new JsonReference(ratingsJsonFields[0], filmsBuilder.build());
+        return new JsonReference(filmsJsonFields[0], filmsBuilder.build());
     }
 
 }

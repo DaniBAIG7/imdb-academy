@@ -166,12 +166,19 @@ public class IndexController {
     private void bulkOperations(List<String> filmsDocument, Optional<List<String>> ratingsDocument) {
 
         JsonParser jParser;
+        Optional<Map<String, String>> ratingsMap;
 
         if(!ratingsDocument.isEmpty()) {
             jParser = new JsonParser(filmsDocument.get(0).split("\t"), Optional.of(ratingsDocument.get().get(0).split("\t")));
+            Map<String, String> auxMap = new HashMap<String, String>();
 
+            ratingsDocument.get().forEach((value) -> auxMap.put(value.split("\t")[0], value));
+            System.out.println("Ratings parsed");
+
+            ratingsMap = Optional.of(auxMap);
         } else {
             jParser = new JsonParser(filmsDocument.get(0).split("\t"), Optional.empty());
+            ratingsMap = Optional.empty();
         }
 
         final int BULK_OPERATIONS = 25000;
@@ -196,7 +203,9 @@ public class IndexController {
                 List<JsonReference> auxSubset = new LinkedList<>();
                 for(int i = lastIndex; i < newIndex; i++) {
                     try {
-                        auxSubset.add(jParser.biParse(filmsDocument.get(i), ratingsDocument.get().get(i)));
+                        String id = filmsDocument.get(i).split("\t")[0];
+                        auxSubset.add(jParser.biParse(filmsDocument.get(i),
+                                Optional.ofNullable(ratingsMap.get().get(id))));
                     } catch (NoRatingsException e) {
                         e.printStackTrace();
                     }
