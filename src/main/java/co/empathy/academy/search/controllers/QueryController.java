@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 @Tag(name = "Query controller", description = "Contains some queries to be thrown to ElasticSearch")
-@RestController
+@RestController("/api")
 public class QueryController {
 
     @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")})
@@ -56,6 +56,8 @@ public class QueryController {
         var q = QueryBuilders.multiMatch().fields(Arrays.stream(fieldsArray).toList()).query(value).build();
         return launchQuery(new Query(q), index);
     }
+
+
 
     private List<Map<String, Object>> launchQuery(Query q, String index) {
         SearchRequest searchRequest = new SearchRequest.Builder().query(q).index(index).build();

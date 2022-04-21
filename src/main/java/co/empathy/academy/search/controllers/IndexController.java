@@ -4,6 +4,8 @@ import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.IndexState;
+import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.empathy.academy.search.exception.NoRatingsException;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
 import co.empathy.academy.search.util.JsonParser;
 import co.empathy.academy.search.util.JsonReference;
@@ -15,6 +17,7 @@ import jakarta.json.JsonObject;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -32,42 +35,55 @@ public class IndexController {
     @GetMapping("/index_documents")
     @ApiResponse(responseCode = "200", description = "Mapping done", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "answers a get petition to index the document. Firstly it creates an index, then it applies a" +
-            " mapping an finally indexes all the documents contained in the films .tsv, whose path must be provided via get" +
-            " parameter.")
-    public void indexDocuments() {
+            " mapping an finally indexes all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
+            " whose paths must be provided via get parameter.")
+    public void indexDocuments(@RequestParam String filmsPath, @RequestParam(name = "ratingsPath") Optional<String> ratingsPathOpt) {
         try {
 
             Thread bulkOperationTask = new Thread() {
                 public void run() {
-                    bulkOperations("/Users/danibaig/Desktop/academy/imdb-academy/imdb-academy/src/main/resources/static/title.basics.tsv");
+                    indexOperations(filmsPath, ratingsPathOpt);
                 }
             };
+
 
             ClientCustomConfiguration.getClient().indices().delete(i -> i.index("films")); //TODO delete this
 
             ClientCustomConfiguration.getClient().indices().create(i -> i.index("films"));
 
-            ClientCustomConfiguration.getClient().indices().putMapping(_0 -> _0.index("films")
-                    .properties("titleType", _1 -> _1
-                            .keyword(_2 -> _2))
-                    .properties("primaryTitle", _1 -> _1
-                            .text(_2 -> _2
-                                    .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
-                            ))
-                    .properties("originalTitle", _1 -> _1
-                            .text(_2 -> _2
-                                    .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
-                            ))
-                    .properties("isAdult", _1 -> _1
-                            .boolean_(_2 -> _2))
-                    .properties("startYear", _1 -> _1
-                            .integer(_2 -> _2.index(false)))
-                    .properties("endYear", _1 -> _1
-                            .integer(_2 -> _2))
-                    .properties("runtimeMinutes", _1 -> _1
-                            .integer(_2 -> _2.index(false)))
-                    .properties("genres", _1 -> _1
-                            .keyword(_2 -> _2))
+            ClientCustomConfiguration.getClient().indices().putMapping(_0 -> {
+                var req = _0.index("films");
+                        req.properties("titleType", _1 -> _1
+                                .keyword(_2 -> _2))
+                        .properties("primaryTitle", _1 -> _1
+                                .text(_2 -> _2
+                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
+                                ))
+                        .properties("originalTitle", _1 -> _1
+                                .text(_2 -> _2
+                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
+                                ))
+                        .properties("isAdult", _1 -> _1
+                                .boolean_(_2 -> _2))
+                        .properties("startYear", _1 -> _1
+                                .integer(_2 -> _2.index(false)))
+                        .properties("endYear", _1 -> _1
+                                .integer(_2 -> _2))
+                        .properties("runtimeMinutes", _1 -> _1
+                                .integer(_2 -> _2.index(false)))
+                        .properties("genres", _1 -> _1
+                                .keyword(_2 -> _2));
+
+                if(ratingsPathOpt.isPresent())  {
+                    req.properties("averageRating", _1 -> _1
+                                    .double_(_2 -> _2.index(false)))
+                        .properties("numVotes", _1 -> _1
+                            .integer(_2 -> _2.index(false)));
+                }
+
+                return req;
+
+                }
             );
 
             bulkOperationTask.start(); //Starts the bulk operation thread so navigator won't get stuck without response
@@ -127,20 +143,40 @@ public class IndexController {
         }
     }
 
-    private void bulkOperations(String tsvPath) {
-        final int BULK_OPERATIONS = 250000;
-
-        List<String> parsedDocument = null;
+    private void indexOperations(String filmsPath, Optional<String> ratingsPathOpt) {
+        List<String> parsedFilmsDocument = null;
+        Optional<List<String>> parsedRatingsDocument = null;
         try {
-            parsedDocument = Files.readAllLines(Path.of(tsvPath));
-            System.out.println("Document read");
+            parsedFilmsDocument = Files.readAllLines(Path.of(filmsPath));
+            System.out.println("Films document read");
+            if(ratingsPathOpt.isPresent()) {
+                parsedRatingsDocument = Optional.of(Files.readAllLines(Path.of(ratingsPathOpt.get())));
+                System.out.println("Ratings document read");
+                bulkOperations(parsedFilmsDocument, Optional.of(parsedRatingsDocument.get()));
+            } else {
+                bulkOperations(parsedFilmsDocument, Optional.empty());
+            }
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        JsonParser jParser = new JsonParser(parsedDocument.get(0).split("\t"));
+    private void bulkOperations(List<String> filmsDocument, Optional<List<String>> ratingsDocument) {
 
-        int documentLength = parsedDocument.size();
+        JsonParser jParser;
+
+        if(!ratingsDocument.isEmpty()) {
+            jParser = new JsonParser(filmsDocument.get(0).split("\t"), Optional.of(ratingsDocument.get().get(0).split("\t")));
+
+        } else {
+            jParser = new JsonParser(filmsDocument.get(0).split("\t"), Optional.empty());
+        }
+
+        final int BULK_OPERATIONS = 25000;
+
+        int documentLength = filmsDocument.size(); //In fact, any of the two documents could do since they have the same lines
 
         List<JsonReference> subset;
         int documentsIndexed = 0;
@@ -156,8 +192,21 @@ public class IndexController {
                 lastBatch = true;
             }
 
-            subset = parsedDocument.subList(lastIndex, newIndex)
-                    .stream().map(jParser::parse).toList();
+            if(!ratingsDocument.isEmpty()) {
+                List<JsonReference> auxSubset = new LinkedList<>();
+                for(int i = lastIndex; i < newIndex; i++) {
+                    try {
+                        auxSubset.add(jParser.biParse(filmsDocument.get(i), ratingsDocument.get().get(i)));
+                    } catch (NoRatingsException e) {
+                        e.printStackTrace();
+                    }
+                }
+                subset = auxSubset;
+            } else {
+                subset = filmsDocument.subList(lastIndex, newIndex)
+                        .stream().map(jParser::parse).toList();
+            }
+
 
             if(BULK_OPERATIONS / subset.size() == 1.0 || lastBatch) {
                 launchBulk(subset);

@@ -96,7 +96,8 @@
       <workItem from="1649847067266" duration="2087000" />
       <workItem from="1650266190305" duration="12506000" />
       <workItem from="1650355000510" duration="11871000" />
-      <workItem from="1650439979231" duration="2402000" />
+      <workItem from="1650439979231" duration="12194000" />
+      <workItem from="1650525774017" duration="4252000" />
     </task>
     <servers />
   </component>
@@ -106,6 +107,7 @@
   <component name="XDebuggerManager">
     <pin-to-top-manager>
       <pinned-members>
+        <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
         <PinnedItemInfo parentTag="java.util.HashMap$Node" memberName="key" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.BulkResponse" memberName="items" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem" memberName="error" />
