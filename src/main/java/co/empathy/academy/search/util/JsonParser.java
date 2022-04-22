@@ -3,6 +3,7 @@ package co.empathy.academy.search.util;
 
 import co.empathy.academy.search.exception.NoRatingsException;
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 
@@ -57,6 +58,13 @@ public class JsonParser {
                 } else {
                     builder.add(filmsFields[i], jsonFields[i]);
                 }
+            }
+            else if(i == 8) { //Genres field
+                var arrayBuilder = Json.createArrayBuilder();
+                for(String s: jsonFields[i].split(",")) {
+                    arrayBuilder.add(s);
+                }
+                builder.add(filmsFields[i], arrayBuilder.build());
             }
             else {
                 builder.add(filmsFields[i], jsonFields[i]);

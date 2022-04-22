@@ -1,6 +1,9 @@
 package co.empathy.academy.search.controllers;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
@@ -21,10 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Tag(name = "Query controller", description = "Contains some queries to be thrown to ElasticSearch")
 @RestController("/api")
@@ -57,7 +57,44 @@ public class QueryController {
         return launchQuery(new Query(q), index);
     }
 
+    @GetMapping("/search")
+    public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
+                                 @RequestParam Optional<List<String>> filter,
+                                 @RequestParam Optional<String> agg) {
+        SearchRequest req = SearchRequest.of(_0 -> {
+            var wholeQuery = QueryBuilders.bool();
 
+            if(q.isPresent()) {
+                wholeQuery.must(_1 -> _1
+                        .match(_2 -> _2
+                                .field("primaryTitle").query(q.get())
+                        )
+                );
+            }
+
+            if(filter.isPresent()) {
+
+            }
+
+            var wholeReq = _0.index("films").query(new Query(wholeQuery.build()));
+
+            if(agg.isPresent()) {
+               wholeReq.aggregations(AggregationBuilders.filter(agg.get() + "_agg"));
+            }
+
+            return wholeReq;
+        });
+
+        SearchResponse response;
+        try {
+            response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            response = null; //TODO implementar códigos de excepción HTTP personalizados
+        }
+
+        return getResultsAsString(response);
+    }
 
     private List<Map<String, Object>> launchQuery(Query q, String index) {
         SearchRequest searchRequest = new SearchRequest.Builder().query(q).index(index).build();
@@ -71,6 +108,12 @@ public class QueryController {
         }
     }
 
+
+    /**
+     * Private method that manages response for the term, terms and multimatch queries
+     * @param response
+     * @return a json with the response
+     */
     private List<Map<String, Object>> getResults(SearchResponse<JsonData> response) {
         ObjectMapper mapper = new ObjectMapper();
         List<Map<String, Object>> result = new ArrayList<>();
@@ -88,5 +131,13 @@ public class QueryController {
 
         return result;
     }
+
+    public String getResultsAsString(SearchResponse<JsonData> response) {
+        return response.hits().hits().stream()
+                .filter(x -> x.source() != null)
+                .map(x -> x.source().toJson()).toList().toString();
+    }
+
+
 
 }

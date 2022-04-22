@@ -37,7 +37,8 @@ public class IndexController {
     @Operation(summary = "answers a get petition to index the document. Firstly it creates an index, then it applies a" +
             " mapping an finally indexes all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
             " whose paths must be provided via get parameter.")
-    public void indexDocuments(@RequestParam String filmsPath, @RequestParam(name = "ratingsPath") Optional<String> ratingsPathOpt) {
+    public void indexDocuments(@RequestParam String filmsPath,
+                               @RequestParam(name = "ratingsPath", required = false) Optional<String> ratingsPathOpt) {
         try {
 
             Thread bulkOperationTask = new Thread() {
@@ -143,6 +144,12 @@ public class IndexController {
         }
     }
 
+    /**
+     * This method reads all the two different documents provided their paths; Then invokes bulkOperations to do the
+     * parsing and launch the bulk.
+     * @param filmsPath
+     * @param ratingsPathOpt
+     */
     private void indexOperations(String filmsPath, Optional<String> ratingsPathOpt) {
         List<String> parsedFilmsDocument = null;
         Optional<List<String>> parsedRatingsDocument = null;
@@ -164,6 +171,7 @@ public class IndexController {
     }
 
     private void bulkOperations(List<String> filmsDocument, Optional<List<String>> ratingsDocument) {
+        //I'm sorry for this method ;,)
 
         JsonParser jParser;
         Optional<Map<String, String>> ratingsMap;

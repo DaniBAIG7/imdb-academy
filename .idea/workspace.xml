@@ -97,7 +97,8 @@
       <workItem from="1650266190305" duration="12506000" />
       <workItem from="1650355000510" duration="11871000" />
       <workItem from="1650439979231" duration="12194000" />
-      <workItem from="1650525774017" duration="7531000" />
+      <workItem from="1650525774017" duration="14666000" />
+      <workItem from="1650611943899" duration="8512000" />
     </task>
     <servers />
   </component>
@@ -105,21 +106,6 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <condition expression="id.equals(&quot;tt0000250&quot;)" language="JAVA" />
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/IndexController.java</url>
-          <line>206</line>
-          <option name="timeStamp" value="18" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/util/JsonParser.java</url>
-          <line>76</line>
-          <option name="timeStamp" value="19" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
