@@ -18,16 +18,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
 
 @Tag(name = "Query controller", description = "Contains some queries to be thrown to ElasticSearch")
-@RestController("/api")
+@RestController
+@RequestMapping(value = "/api")
 public class QueryController {
 
     @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")})
@@ -59,8 +57,10 @@ public class QueryController {
 
     @GetMapping("/search")
     public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
-                                 @RequestParam Optional<List<String>> filter,
-                                 @RequestParam Optional<String> agg) {
+                                 @RequestParam(required = false) Optional<List<String>> type,
+                                 @RequestParam(required = false) Optional<List<String>> genre,
+                                 @RequestParam(required = false, name = "agg") Optional<String> aggField
+                                 ) {
         SearchRequest req = SearchRequest.of(_0 -> {
             var wholeQuery = QueryBuilders.bool();
 
@@ -72,14 +72,18 @@ public class QueryController {
                 );
             }
 
-            if(filter.isPresent()) {
-
-            }
+            if(type.isPresent())
+                wholeQuery = putFilter(type.get(), "type", wholeQuery);
+            if(genre.isPresent())
+                wholeQuery = putFilter(genre.get(), "genre", wholeQuery);
 
             var wholeReq = _0.index("films").query(new Query(wholeQuery.build()));
 
-            if(agg.isPresent()) {
-               wholeReq.aggregations(AggregationBuilders.filter(agg.get() + "_agg"));
+            if(aggField.isPresent()) {
+               wholeReq.aggregations(
+                       aggField.get() + "_agg",
+                       AggregationBuilders.terms().field(aggField.get()).build()._toAggregation()
+               );
             }
 
             return wholeReq;
@@ -94,6 +98,15 @@ public class QueryController {
         }
 
         return getResultsAsString(response);
+    }
+
+    private BoolQuery.Builder putFilter(List<String> values, String field, BoolQuery.Builder builder) {
+        return builder.filter(_1 -> _1.terms(_2 -> _2
+                        .field(field).terms(_3 -> _3
+                                .value(values.stream().map(FieldValue::of).toList())
+                        )
+                ) //Parseo de los typeFilters a FieldValue
+        );
     }
 
     private List<Map<String, Object>> launchQuery(Query q, String index) {

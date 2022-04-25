@@ -98,7 +98,8 @@
       <workItem from="1650355000510" duration="11871000" />
       <workItem from="1650439979231" duration="12194000" />
       <workItem from="1650525774017" duration="14666000" />
-      <workItem from="1650611943899" duration="8512000" />
+      <workItem from="1650611943899" duration="8809000" />
+      <workItem from="1650870326033" duration="4751000" />
     </task>
     <servers />
   </component>
@@ -106,6 +107,15 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/QueryController.java</url>
+          <line>81</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
