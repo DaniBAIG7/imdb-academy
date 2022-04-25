@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.json.Json;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -75,8 +76,9 @@ public class QueryController {
             if(type.isPresent())
                 wholeQuery = putFilter(type.get(), "type", wholeQuery);
             if(genre.isPresent())
-                wholeQuery = putFilter(genre.get(), "genre", wholeQuery);
+                wholeQuery = putFilter(genre.get(), "genres", wholeQuery);
 
+            //Assigning query to films index and placing it into request
             var wholeReq = _0.index("films").query(new Query(wholeQuery.build()));
 
             if(aggField.isPresent()) {
@@ -97,7 +99,7 @@ public class QueryController {
             response = null; //TODO implementar códigos de excepción HTTP personalizados
         }
 
-        return getResultsAsString(response);
+        return getResultsAsString(aggField, response);
     }
 
     private BoolQuery.Builder putFilter(List<String> values, String field, BoolQuery.Builder builder) {
@@ -145,12 +147,36 @@ public class QueryController {
         return result;
     }
 
-    public String getResultsAsString(SearchResponse<JsonData> response) {
-        return response.hits().hits().stream()
-                .filter(x -> x.source() != null)
-                .map(x -> x.source().toJson()).toList().toString();
+    public String getResultsAsString(Optional<String> aggFieldOpt, SearchResponse<JsonData> response) {
+
+
+        String toRet;
+
+        if(aggFieldOpt.isPresent()) {
+            toRet = parseAggregations(aggFieldOpt.get(), response);
+        } else {
+            toRet = response.hits().hits().stream()
+                    .filter(x -> x.source() != null)
+                    .map(x -> x.source().toJson()).toList().toString();
+        }
+
+        return toRet;
+
     }
 
+    private String parseAggregations(String aggField, SearchResponse<JsonData> response) {
+        String aggName = aggField + "_agg";
+        var list = response.aggregations().get(aggName).sterms().buckets().array();
+
+        var buckets = list.stream()
+                .map(x -> Json.createObjectBuilder().add("key", x.key()).add("doc_count", x.docCount()).build());
+
+        var result = Json.createArrayBuilder();
+
+        buckets.forEach(result::add);
+
+        return result.build().toString();
+    }
 
 
 }

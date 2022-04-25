@@ -56,6 +56,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers" />
       <recent name="$PROJECT_DIR$/src/main/resources/static" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -99,7 +100,7 @@
       <workItem from="1650439979231" duration="12194000" />
       <workItem from="1650525774017" duration="14666000" />
       <workItem from="1650611943899" duration="8809000" />
-      <workItem from="1650870326033" duration="4751000" />
+      <workItem from="1650870326033" duration="12400000" />
     </task>
     <servers />
   </component>
@@ -107,21 +108,16 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/QueryController.java</url>
-          <line>81</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
         <PinnedItemInfo parentTag="java.util.HashMap$Node" memberName="key" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.BulkResponse" memberName="items" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.search.HitsMetadata" memberName="hits" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchRequest" memberName="query" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem" memberName="error" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate" memberName="buckets" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.Query" memberName="_kind" />
       </pinned-members>
     </pin-to-top-manager>
   </component>
