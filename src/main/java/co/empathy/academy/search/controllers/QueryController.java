@@ -191,7 +191,10 @@ public class QueryController {
         } else {
             toRet = response.hits().hits().stream()
                     .filter(x -> x.source() != null)
-                    .map(x -> x.source().toJson()).toList().toString();
+                    .map(x -> Json.createObjectBuilder()
+                            .add("id", x.id())
+                            .add("source", x.source().toJson())
+                            .build()).toList().toString();
         }
 
         return toRet;
