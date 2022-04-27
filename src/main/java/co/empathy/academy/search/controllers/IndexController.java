@@ -31,8 +31,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Tag(name = "Index controller", description = "Allows the creation and deletion of indexes, as well as document indexing for certain," +
-        "locally stored TSV with all the information to be used in the subsequent searches to ElasticClient")
-@RestController
+        "locally stored TSV with all the information to be used in the subsequent searches to ElasticClient.")
+@RestController(value="/admin/api")
 public class IndexController {
 
     /**

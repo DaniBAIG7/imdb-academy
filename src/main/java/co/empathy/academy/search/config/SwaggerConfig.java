@@ -13,6 +13,22 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
     @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("imdb-public")
+                .pathsToMatch("/api/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi adminApi() {
+        return GroupedOpenApi.builder()
+                .group("imdb-admin")
+                .pathsToMatch("/admin/**")
+                .build();
+    }
+
+    @Bean
     public OpenAPI customOpenAPI(@Value("${application-description}") String appDesciption, @Value("${application-version}") String appVersion) {
         return new OpenAPI()
                 .info(new Info()
