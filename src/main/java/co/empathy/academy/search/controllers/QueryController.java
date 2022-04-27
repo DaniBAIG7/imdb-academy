@@ -1,5 +1,6 @@
 package co.empathy.academy.search.controllers;
 
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
@@ -11,6 +12,8 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import co.empathy.academy.search.exception.ElasticsearchConnectionException;
+import co.empathy.academy.search.exception.IndexNotFoundException;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +35,7 @@ public class QueryController {
     @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Throws a terms query for a given index. Requires a field and several terms to match it.")
     @GetMapping("/terms/{index}/_search")
-    public List<Map<String, Object>> termsQuery(@PathVariable String index, @RequestParam String field, @RequestParam String values)  {
+    public List<Map<String, Object>> termsQuery(@PathVariable String index, @RequestParam String field, @RequestParam String values) throws ElasticsearchConnectionException, IndexNotFoundException {
         String[] valuesArray = values.split(",");
         var fieldValues = Arrays.stream(valuesArray).map(v -> FieldValue.of(v)).toList();
         var q = QueryBuilders.terms().field(field).terms(TermsQueryField.of(t -> t.value(fieldValues))).build();
@@ -42,7 +45,7 @@ public class QueryController {
     @GetMapping("/term/{index}/_search")
     @ApiResponse(responseCode = "200", description = "Term query result", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Throws a term query for a given index. Requires a field and a term to match it.")
-    public List<Map<String, Object>> termQuery(@PathVariable String index, @RequestParam String field, @RequestParam String value) {
+    public List<Map<String, Object>> termQuery(@PathVariable String index, @RequestParam String field, @RequestParam String value) throws ElasticsearchConnectionException, IndexNotFoundException {
         var q = QueryBuilders.term().field(field).value(value).build();
         return launchQuery(new Query(q), index);
     }
@@ -50,18 +53,26 @@ public class QueryController {
     @GetMapping("/multimatch/{index}/_search")
     @ApiResponse(responseCode = "200", description = "Multimatch query result", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Throws a multimatch query for a given index. Requires several fields and a value to match them.")
-    public List<Map<String, Object>> multiMatchQuery(@PathVariable String index, @RequestParam String fields, @RequestParam String value) {
+    public List<Map<String, Object>> multiMatchQuery(@PathVariable String index, @RequestParam String fields, @RequestParam String value) throws ElasticsearchConnectionException, IndexNotFoundException {
         String[] fieldsArray = fields.split(",");
         var q = QueryBuilders.multiMatch().fields(Arrays.stream(fieldsArray).toList()).query(value).build();
         return launchQuery(new Query(q), index);
     }
 
+    
     @GetMapping("/search")
+    @ApiResponse(responseCode = "200", description = "Search query result", content = { @Content(mediaType = "application/json")})
+    @Operation(summary = "Throws a bool query combining some parameters that can be included or not.\n" +
+            "\"q\" parameter: Allows creating a must-match query over the \"primaryTitle\" value from the database according to the provided value.\n" +
+            "\"type\" parameter: Allows creating a filter for the query over the \"type\" field.\n" +
+            "\"genre\" parameter: Allows creating a filter for the query over the \"genre\" field.\n" +
+            "\"agg\" parameter: Allows providing a certain field to perform an aggregation over it and define it as query result.")
     public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
+
                                  @RequestParam(required = false, name = "agg") Optional<String> aggField
-                                 ) {
+                                 ) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest req = SearchRequest.of(_0 -> {
             var wholeQuery = QueryBuilders.bool();
 
@@ -95,8 +106,9 @@ public class QueryController {
         try {
             response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
         } catch (IOException e) {
-            e.printStackTrace();
-            response = null; //TODO implementar códigos de excepción HTTP personalizados
+            throw new ElasticsearchConnectionException();
+        } catch (ElasticsearchException i) {
+            throw new IndexNotFoundException("films");
         }
 
         return getResultsAsString(aggField, response);
@@ -111,15 +123,16 @@ public class QueryController {
         );
     }
 
-    private List<Map<String, Object>> launchQuery(Query q, String index) {
+    private List<Map<String, Object>> launchQuery(Query q, String index) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest searchRequest = new SearchRequest.Builder().query(q).index(index).build();
 
         try {
             SearchResponse<JsonData> res = ClientCustomConfiguration.getClient().search(searchRequest, JsonData.class);
             return getResults(res);
         } catch (IOException e) {
-            e.printStackTrace();
-            return new ArrayList<>(); //If this happens query has failed
+            throw new ElasticsearchConnectionException();
+        } catch (ElasticsearchException i) {
+            throw new IndexNotFoundException(index);
         }
     }
 

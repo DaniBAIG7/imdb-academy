@@ -1,10 +1,14 @@
 package co.empathy.academy.search.controllers;
 
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.IndexState;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.empathy.academy.search.exception.ElasticsearchConnectionException;
+import co.empathy.academy.search.exception.IndexAlreadyExistsException;
+import co.empathy.academy.search.exception.IndexNotFoundException;
 import co.empathy.academy.search.exception.NoRatingsException;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
 import co.empathy.academy.search.util.JsonParser;
@@ -38,7 +42,7 @@ public class IndexController {
             " mapping an finally indexes all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
             " whose paths must be provided via get parameter.")
     public void indexDocuments(@RequestParam String filmsPath,
-                               @RequestParam(name = "ratingsPath", required = false) Optional<String> ratingsPathOpt) {
+                               @RequestParam(name = "ratingsPath", required = false) Optional<String> ratingsPathOpt) throws ElasticsearchConnectionException, IndexNotFoundException {
         try {
 
             Thread bulkOperationTask = new Thread() {
@@ -46,11 +50,6 @@ public class IndexController {
                     indexOperations(filmsPath, ratingsPathOpt);
                 }
             };
-
-
-            ClientCustomConfiguration.getClient().indices().delete(i -> i.index("films")); //TODO delete this
-
-            ClientCustomConfiguration.getClient().indices().create(i -> i.index("films"));
 
             ClientCustomConfiguration.getClient().indices().putMapping(_0 -> {
                 var req = _0.index("films");
@@ -90,7 +89,9 @@ public class IndexController {
             bulkOperationTask.start(); //Starts the bulk operation thread so navigator won't get stuck without response
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ElasticsearchConnectionException();
+        } catch (ElasticsearchException i) {
+            throw new IndexNotFoundException("films");
         }
 
     }
@@ -105,17 +106,17 @@ public class IndexController {
     @ApiResponse(responseCode = "200", description = "Index created", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Creates an index with the specified name")
     @PutMapping("/{indexName}")
-    public boolean createIndex(@PathVariable String indexName, @RequestBody String jsonDetails) {
+    public boolean createIndex(@PathVariable String indexName, @RequestBody String jsonDetails) throws ElasticsearchConnectionException, IndexAlreadyExistsException {
 
         Reader queryJson = new StringReader(jsonDetails);
         var req = CreateIndexRequest.of(b -> b.index(indexName).withJson(queryJson));
 
         try {
-            boolean created = ClientCustomConfiguration.getClient().indices().create(req).acknowledged();
-            return created;
+            return ClientCustomConfiguration.getClient().indices().create(req).acknowledged();
         } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+            throw new ElasticsearchConnectionException();
+        } catch (ElasticsearchException e) {
+            throw new IndexAlreadyExistsException(indexName);
         }
     }
 
@@ -128,7 +129,7 @@ public class IndexController {
     @ApiResponse(responseCode = "200", description = "Index deleted", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Deletes an index given its name")
     @DeleteMapping("/delete/{indexName}")
-    public boolean removeIndex(@PathVariable String indexName) {
+    public boolean removeIndex(@PathVariable String indexName) throws ElasticsearchConnectionException, IndexNotFoundException {
 
         try {
 
@@ -139,8 +140,9 @@ public class IndexController {
             return indices.acknowledged();
 
         } catch (IOException i ) {
-            System.out.println(i.getStackTrace());
-            return false;
+            throw new ElasticsearchConnectionException();
+        } catch (ElasticsearchException e) {
+            throw new IndexNotFoundException(indexName);
         }
     }
 
