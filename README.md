@@ -12,24 +12,29 @@ The IMDb academy first version has been written using the following:
 ## Installing and running
 To run the application, you should first download the code by cloning the repo, using the following command:
 ```
-https://github.com/DaniBAIG7/imdb-academy.git
+git clone https://github.com/DaniBAIG7/imdb-academy.git
 ```
-Then, you should correctly build the project using Maven
+Once cloned, we go into that folder and compose the Docker container, using the following folder:
 ```
-mvn compile
-```
-Just after that, the Docker container with the ElasticSearch image should be ran. For this you have to download the ElasticSearch 7.16.2 image first. You can do both things by running the next commands:
-```
-docker pull docker.elastic.co/elasticsearch/elasticsearch:7.16.2
-docker run -d --name elasticsearch-imdb -p 9200:9200 -p 9300:9300 \
- -e "discovery.type=single-node" \
-docker.elastic.co/elasticsearch/elasticsearch:7.16.2
+cd imdb-academy
+docker-compose up
 ```
 By doing that, we have the container running with the necessary version of ElasticSearch.
 
+Now it's time to start the Spring project. For that we can use the following commands:
+```
+mvn compile
+mvn spring-boot:run
+```
+##Data necessary for working with the API
 There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in [this link](https://datasets.imdbws.com/); _title\_basics.tsv_ and _title\_ratings.tsv_.
 After downloading them, they must be placed in the project folder **src/main/resources/static**.
 
-Finally, the last thing remaining is to launch the project using Maven, for which we use the command
-```
-mvn spring-boot:run
+##Instructions
+Firstly, you should fill Elasticsearch by indexing (at least once) all the documents on the documents mentioned earlier.
+For this, a call to _http://localhost:8080/admin/api/index\_documents_ is necessary (for further information regarding this endpoint, please, take a look to Swagger documentation in the last section).
+
+A call to this endpoint will trigger the (slow, aprox. 40 min) indexing of all the data to be available in elastic. Don't worry: While indexing is working you can (under your own risk :D) start querying the database.
+
+##Documentation
+You can access a **Swagger** documentation, once the application is running, by accessing the following URL: 
