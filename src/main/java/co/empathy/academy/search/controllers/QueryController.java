@@ -106,9 +106,9 @@ public class QueryController {
         try {
             response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
         } catch (IOException e) {
-            throw new ElasticsearchConnectionException();
+            throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
-            throw new IndexNotFoundException("films");
+            throw new IndexNotFoundException("films", i);
         }
 
         return getResultsAsString(aggField, response);
@@ -130,9 +130,9 @@ public class QueryController {
             SearchResponse<JsonData> res = ClientCustomConfiguration.getClient().search(searchRequest, JsonData.class);
             return getResults(res);
         } catch (IOException e) {
-            throw new ElasticsearchConnectionException();
+            throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
-            throw new IndexNotFoundException(index);
+            throw new IndexNotFoundException(index, i);
         }
     }
 

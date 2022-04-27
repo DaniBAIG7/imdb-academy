@@ -16,6 +16,7 @@ import co.empathy.academy.search.util.JsonReference;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.json.JsonObject;
 import org.springframework.web.bind.annotation.*;
@@ -37,12 +38,16 @@ public class IndexController {
      * mapping an finally indexes all the documents contained in the films .tsv.
      */
     @GetMapping("/index_documents")
-    @ApiResponse(responseCode = "200", description = "Mapping done", content = { @Content(mediaType = "application/json")})
-    @Operation(summary = "answers a get petition to index the document. Firstly it creates an index, then it applies a" +
-            " mapping an finally indexes all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Mapping done", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "404", description = "Index not found", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
+    @Operation(summary = "answers a get petition to index the document. It applies a" +
+            " mapping an finally indexes to \"films\" index all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
             " whose paths must be provided via get parameter.")
     public void indexDocuments(@RequestParam String filmsPath,
-                               @RequestParam(name = "ratingsPath", required = false) Optional<String> ratingsPathOpt) throws ElasticsearchConnectionException, IndexNotFoundException {
+                               @RequestParam(name = "ratingsPath", required = false) Optional<String> ratingsPathOpt) {
         try {
 
             Thread bulkOperationTask = new Thread() {
@@ -88,10 +93,10 @@ public class IndexController {
 
             bulkOperationTask.start(); //Starts the bulk operation thread so navigator won't get stuck without response
 
-        } catch (IOException e) {
-            throw new ElasticsearchConnectionException();
-        } catch (ElasticsearchException i) {
-            throw new IndexNotFoundException("films");
+        } catch (IOException i) {
+            throw new ElasticsearchConnectionException(i);
+        } catch (ElasticsearchException e) {
+            throw new IndexNotFoundException("films", e);
         }
 
     }
@@ -106,17 +111,17 @@ public class IndexController {
     @ApiResponse(responseCode = "200", description = "Index created", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Creates an index with the specified name")
     @PutMapping("/{indexName}")
-    public boolean createIndex(@PathVariable String indexName, @RequestBody String jsonDetails) throws ElasticsearchConnectionException, IndexAlreadyExistsException {
+    public boolean createIndex(@PathVariable String indexName, @RequestBody String jsonDetails) {
 
         Reader queryJson = new StringReader(jsonDetails);
         var req = CreateIndexRequest.of(b -> b.index(indexName).withJson(queryJson));
 
         try {
             return ClientCustomConfiguration.getClient().indices().create(req).acknowledged();
-        } catch (IOException e) {
-            throw new ElasticsearchConnectionException();
+        } catch (IOException i) {
+            throw new ElasticsearchConnectionException(i);
         } catch (ElasticsearchException e) {
-            throw new IndexAlreadyExistsException(indexName);
+            throw new IndexAlreadyExistsException(indexName, e);
         }
     }
 
@@ -129,7 +134,7 @@ public class IndexController {
     @ApiResponse(responseCode = "200", description = "Index deleted", content = { @Content(mediaType = "application/json")})
     @Operation(summary = "Deletes an index given its name")
     @DeleteMapping("/delete/{indexName}")
-    public boolean removeIndex(@PathVariable String indexName) throws ElasticsearchConnectionException, IndexNotFoundException {
+    public boolean removeIndex(@PathVariable String indexName) {
 
         try {
 
@@ -140,9 +145,9 @@ public class IndexController {
             return indices.acknowledged();
 
         } catch (IOException i ) {
-            throw new ElasticsearchConnectionException();
+            throw new ElasticsearchConnectionException(i);
         } catch (ElasticsearchException e) {
-            throw new IndexNotFoundException(indexName);
+            throw new IndexNotFoundException(indexName, e);
         }
     }
 

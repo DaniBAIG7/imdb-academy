@@ -20,13 +20,7 @@ public class APIExceptionHandler extends ResponseEntityExceptionHandler{
                     , e.getCause().toString()));
         }
 
-        @ExceptionHandler(value = {IndexNotFoundException.class})
-        public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
-            return createResponseEntity(new ErrorResponse(HttpStatus.NOT_FOUND, e.getMessage()
-                    , e.getCause().toString()));
-        }
-
-    @ExceptionHandler(value = {IndexAlreadyExistsException.class})
+    @ExceptionHandler(value = {IndexAlreadyExistsException.class, IndexNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException e) {
         return createResponseEntity(new ErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage()
                 , e.getCause().toString()));
