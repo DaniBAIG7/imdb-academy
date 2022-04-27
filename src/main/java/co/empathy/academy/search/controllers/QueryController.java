@@ -18,8 +18,10 @@ import co.empathy.academy.search.util.ClientCustomConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.json.Json;
 import org.springframework.web.bind.annotation.*;
@@ -32,9 +34,14 @@ import java.util.*;
 @RequestMapping(value = "/api")
 public class QueryController {
 
-    @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")})
-    @Operation(summary = "Throws a terms query for a given index. Requires a field and several terms to match it.")
     @GetMapping("/terms/{index}/_search")
+    @Parameter(name="index", description="Name of the index over which to throw the terms query")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
+    @Operation(summary = "Throws a terms query for a given index. Requires a field and several terms to match it.")
     public List<Map<String, Object>> termsQuery(@PathVariable String index, @RequestParam String field, @RequestParam String values) throws ElasticsearchConnectionException, IndexNotFoundException {
         String[] valuesArray = values.split(",");
         var fieldValues = Arrays.stream(valuesArray).map(v -> FieldValue.of(v)).toList();
@@ -43,7 +50,12 @@ public class QueryController {
     }
 
     @GetMapping("/term/{index}/_search")
-    @ApiResponse(responseCode = "200", description = "Term query result", content = { @Content(mediaType = "application/json")})
+    @Parameter(name="index", description="Name of the index over which to throw the term query")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
     @Operation(summary = "Throws a term query for a given index. Requires a field and a term to match it.")
     public List<Map<String, Object>> termQuery(@PathVariable String index, @RequestParam String field, @RequestParam String value) throws ElasticsearchConnectionException, IndexNotFoundException {
         var q = QueryBuilders.term().field(field).value(value).build();
@@ -51,7 +63,12 @@ public class QueryController {
     }
 
     @GetMapping("/multimatch/{index}/_search")
-    @ApiResponse(responseCode = "200", description = "Multimatch query result", content = { @Content(mediaType = "application/json")})
+    @Parameter(name="index", description="Name of the index over which to throw the multimatch query")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Multimatch query result", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
     @Operation(summary = "Throws a multimatch query for a given index. Requires several fields and a value to match them.")
     public List<Map<String, Object>> multiMatchQuery(@PathVariable String index, @RequestParam String fields, @RequestParam String value) throws ElasticsearchConnectionException, IndexNotFoundException {
         String[] fieldsArray = fields.split(",");
@@ -61,12 +78,16 @@ public class QueryController {
 
     
     @GetMapping("/search")
-    @ApiResponse(responseCode = "200", description = "Search query result", content = { @Content(mediaType = "application/json")})
-    @Operation(summary = "Throws a bool query combining some parameters that can be included or not.\n" +
-            "\"q\" parameter: Allows creating a must-match query over the \"primaryTitle\" value from the database according to the provided value.\n" +
-            "\"type\" parameter: Allows creating a filter for the query over the \"type\" field.\n" +
-            "\"genre\" parameter: Allows creating a filter for the query over the \"genre\" field.\n" +
-            "\"agg\" parameter: Allows providing a certain field to perform an aggregation over it and define it as query result.")
+    @Parameter(name="q", description="Allows creating a must-match query over the \"primaryTitle\" value from the database according to the provided value.", required = false)
+    @Parameter(name="type", description="Allows creating a filter for the query over the \"type\" field.", required = false)
+    @Parameter(name="genre", description="Allows creating a filter for the query over the \"genre\" field.", required = false)
+    @Parameter(name="agg", description="Allows providing a certain field to perform an aggregation over it and define it as query result.", required = false)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Search query result", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
+    @Operation(summary = "Throws a bool query combining the different parameters")
     public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,

@@ -14,6 +14,8 @@ import co.empathy.academy.search.util.ClientCustomConfiguration;
 import co.empathy.academy.search.util.JsonParser;
 import co.empathy.academy.search.util.JsonReference;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -40,8 +42,12 @@ public class IndexController {
     @GetMapping("/index_documents")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Mapping done", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "404", description = "Index not found", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index not found", content = { @Content(mediaType = "application/json")}),
             @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
+    @Parameters({
+            @Parameter(name = "ratingsPath", description = "Path for ratings.tsv", required = true),
+            @Parameter(required = false, name = "filmsPath", description = "Path for films.tsv")
     })
     @Operation(summary = "answers a get petition to index the document. It applies a" +
             " mapping an finally indexes to \"films\" index all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
@@ -108,7 +114,12 @@ public class IndexController {
      * @param jsonDetails
      * @return boolean stating if everything is correct.
      */
-    @ApiResponse(responseCode = "200", description = "Index created", content = { @Content(mediaType = "application/json")})
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Index created", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index already exists", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
+    @Parameter(name="indexName", description="Name of the index to be created")
     @Operation(summary = "Creates an index with the specified name")
     @PutMapping("/{indexName}")
     public boolean createIndex(@PathVariable String indexName, @RequestBody String jsonDetails) {
@@ -131,7 +142,11 @@ public class IndexController {
      * @param indexName
      * @return boolean with the status of the index deletion
      */
-    @ApiResponse(responseCode = "200", description = "Index deleted", content = { @Content(mediaType = "application/json")})
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Index deleted", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index already exists", content = { @Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+    })
     @Operation(summary = "Deletes an index given its name")
     @DeleteMapping("/delete/{indexName}")
     public boolean removeIndex(@PathVariable String indexName) {
