@@ -56,9 +56,11 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers" />
       <recent name="$PROJECT_DIR$/src/main/resources/static" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="co.empathy.academy.search.controllers" />
       <recent name="co.empathy.academy.search.util" />
     </key>
   </component>
@@ -86,7 +88,24 @@
       <workItem from="1649660665846" duration="14939000" />
       <workItem from="1649676762870" duration="1973000" />
       <workItem from="1649679128577" duration="78000" />
-      <workItem from="1649748009210" duration="12272000" />
+      <workItem from="1649748009210" duration="12407000" />
+      <workItem from="1649836315691" duration="10000" />
+      <workItem from="1649843655466" duration="176000" />
+      <workItem from="1649843872881" duration="564000" />
+      <workItem from="1649844617528" duration="967000" />
+      <workItem from="1649846168845" duration="655000" />
+      <workItem from="1649847067266" duration="2087000" />
+      <workItem from="1650266190305" duration="12506000" />
+      <workItem from="1650355000510" duration="11871000" />
+      <workItem from="1650439979231" duration="12194000" />
+      <workItem from="1650525774017" duration="14666000" />
+      <workItem from="1650611943899" duration="8809000" />
+      <workItem from="1650870326033" duration="12968000" />
+      <workItem from="1650956819345" duration="726000" />
+      <workItem from="1651045406871" duration="339000" />
+      <workItem from="1651045870381" duration="2949000" />
+      <workItem from="1651049152515" duration="6093000" />
+      <workItem from="1651057699729" duration="736000" />
     </task>
     <servers />
   </component>
@@ -94,20 +113,16 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/IndexController.java</url>
-          <line>63</line>
-          <option name="timeStamp" value="16" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
+        <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
         <PinnedItemInfo parentTag="java.util.HashMap$Node" memberName="key" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.BulkResponse" memberName="items" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.search.HitsMetadata" memberName="hits" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchRequest" memberName="query" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem" memberName="error" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate" memberName="buckets" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.Query" memberName="_kind" />
       </pinned-members>
     </pin-to-top-manager>
   </component>
