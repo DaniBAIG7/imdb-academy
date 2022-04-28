@@ -98,15 +98,16 @@ public class QueryController {
             var wholeQuery = QueryBuilders.bool();
 
             if(q.isPresent()) {
+
                 wholeQuery.must(_1 -> _1
-                        .match(_2 -> _2
-                                .field("primaryTitle").query(q.get())
+                        .multiMatch(_2 -> _2
+                                .fields("primaryTitle", "originalTitle").query(q.get())
                         )
                 );
             }
 
             if(type.isPresent())
-                wholeQuery = putFilter(type.get(), "type", wholeQuery);
+                wholeQuery = putFilter(type.get(), "titleType", wholeQuery);
             if(genre.isPresent())
                 wholeQuery = putFilter(genre.get(), "genres", wholeQuery);
 
@@ -124,6 +125,7 @@ public class QueryController {
         });
 
         SearchResponse response;
+
         try {
             response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
         } catch (IOException e) {

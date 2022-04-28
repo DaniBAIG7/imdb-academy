@@ -32,7 +32,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Tag(name = "Index controller", description = "Allows the creation and deletion of indexes, as well as document indexing for certain," +
         "locally stored TSV with all the information to be used in the subsequent searches to ElasticClient.")
-@RestController(value="/admin/api")
+@RestController
+@RequestMapping(value="/admin/api")
 public class IndexController {
 
     /**
@@ -67,12 +68,12 @@ public class IndexController {
                         req.properties("titleType", _1 -> _1
                                 .keyword(_2 -> _2))
                         .properties("primaryTitle", _1 -> _1
-                                .text(_2 -> _2
-                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
+                                .text(_2 -> _2.boost(8.0)
+                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4.boost(9.0)))
                                 ))
                         .properties("originalTitle", _1 -> _1
-                                .text(_2 -> _2
-                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4))
+                                .text(_2 -> _2.boost(9.8)
+                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4.boost(10.0)))
                                 ))
                         .properties("isAdult", _1 -> _1
                                 .boolean_(_2 -> _2))
