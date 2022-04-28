@@ -14,7 +14,7 @@ To run the application, you should first download the code by cloning the repo, 
 ```
 git clone https://github.com/DaniBAIG7/imdb-academy.git
 ```
-Once cloned, we go into that folder and compose the Docker container, using the following folder:
+Once cloned, we go into that folder and compose the Docker container, using the following command:
 ```
 cd imdb-academy
 docker-compose up
@@ -31,7 +31,7 @@ There are several files used in the project that need to be downloaded to get it
 
 ## Instructions
 Firstly, you should fill Elasticsearch by indexing (at least once) all the documents on the documents mentioned earlier.
-For this, a call to _http://localhost:8080/admin/api/index\_documents_ is necessary (for further information regarding this endpoint, please, take a look to Swagger documentation in the last section).
+For this, a call to _http://localhost:8080/admin/api/index_documents_ is necessary (for further information regarding this endpoint, please, take a look to Swagger documentation in the last section).
 
 A call to this endpoint will trigger the (slow, aprox. 40 min) indexing of all the data to be available in elastic. Don't worry: While indexing is working you can (under your own risk :D) start querying the database.
 
