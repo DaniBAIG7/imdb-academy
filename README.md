@@ -26,15 +26,16 @@ Now it's time to start the Spring project. For that we can use the following com
 mvn compile
 mvn spring-boot:run
 ```
-##Data necessary for working with the API
+## Data necessary for working with the API
 There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in [this link](https://datasets.imdbws.com/); _title\_basics.tsv_ and _title\_ratings.tsv_.
 After downloading them, they must be placed in the project folder **src/main/resources/static**.
 
-##Instructions
+## Instructions
 Firstly, you should fill Elasticsearch by indexing (at least once) all the documents on the documents mentioned earlier.
 For this, a call to _http://localhost:8080/admin/api/index\_documents_ is necessary (for further information regarding this endpoint, please, take a look to Swagger documentation in the last section).
 
 A call to this endpoint will trigger the (slow, aprox. 40 min) indexing of all the data to be available in elastic. Don't worry: While indexing is working you can (under your own risk :D) start querying the database.
 
-##Documentation
+## Documentation
 You can access a **Swagger** documentation, once the application is running, by accessing the following URL: 
+http://localhost:8080/swagger-ui/index.html?urls.primaryName=imdb-public
