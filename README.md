@@ -28,7 +28,6 @@ mvn spring-boot:run
 ```
 ## Data necessary for working with the API
 There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in [this link](https://datasets.imdbws.com/); _title\_basics.tsv_ and _title\_ratings.tsv_.
-After downloading them, they must be placed in the project folder **src/main/resources/static**.
 
 ## Instructions
 Firstly, you should fill Elasticsearch by indexing (at least once) all the documents on the documents mentioned earlier.
