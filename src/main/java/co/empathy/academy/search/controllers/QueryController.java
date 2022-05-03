@@ -91,10 +91,18 @@ public class QueryController {
     public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
-
-                                 @RequestParam(required = false, name = "agg") Optional<String> aggField
+                                 @RequestParam(required = false) Optional<List<String>> gte,
+                                 @RequestParam(required = false, name = "agg") Optional<String> aggField,
+                                 @RequestParam(required = false) Optional<Integer> from,
+                                 @RequestParam(required = false) Optional<Integer> size
                                  ) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest req = SearchRequest.of(_0 -> {
+
+            if(from.isPresent())
+                _0.from(from.get());
+            if(size.isPresent())
+                _0.size(size.get());
+
             var wholeQuery = QueryBuilders.bool();
 
             if(q.isPresent()) {
@@ -104,12 +112,16 @@ public class QueryController {
                                 .fields("primaryTitle", "originalTitle").query(q.get())
                         )
                 );
+
             }
 
             if(type.isPresent())
                 wholeQuery = putFilter(type.get(), "titleType", wholeQuery);
             if(genre.isPresent())
                 wholeQuery = putFilter(genre.get(), "genres", wholeQuery);
+            if(gte.isPresent())
+                wholeQuery = putFilter(gte.get(), "gte", wholeQuery);
+
 
             //Assigning query to films index and placing it into request
             var wholeReq = _0.index("films").query(new Query(wholeQuery.build()));
@@ -146,7 +158,7 @@ public class QueryController {
         );
     }
 
-    private List<Map<String, Object>> launchQuery(Query q, String index) throws ElasticsearchConnectionException, IndexNotFoundException {
+    private List<Map<String, Object>> launchQuery(Query q, String index) {
         SearchRequest searchRequest = new SearchRequest.Builder().query(q).index(index).build();
 
         try {
