@@ -87,19 +87,19 @@ public class IndexController {
                         .properties("isAdult", _1 -> _1
                                 .boolean_(_2 -> _2))
                         .properties("startYear", _1 -> _1
-                                .integer(_2 -> _2.index(false)))
+                                .integer(_2 -> _2.nullValue(0)))
                         .properties("endYear", _1 -> _1
                                 .integer(_2 -> _2))
                         .properties("runtimeMinutes", _1 -> _1
-                                .integer(_2 -> _2.index(false)))
+                                .integer(_2 -> _2.nullValue(0)))
                         .properties("genres", _1 -> _1
                                 .keyword(_2 -> _2));
 
                 if(ratingsPathOpt.isPresent())  {
                     req.properties("averageRating", _1 -> _1
-                                    .double_(_2 -> _2.index(false)))
+                                    .double_(_2 -> _2.nullValue(0.0)))
                         .properties("numVotes", _1 -> _1
-                            .integer(_2 -> _2.index(false)));
+                            .integer(_2 -> _2.nullValue(0)));
                 }
 
                 return req;
