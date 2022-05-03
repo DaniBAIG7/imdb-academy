@@ -50,7 +50,7 @@ public class IndexController {
             @Parameter(name = "ratingsPath", description = "Path for ratings.tsv", required = true),
             @Parameter(required = false, name = "filmsPath", description = "Path for films.tsv")
     })
-    @Operation(summary = "answers a get petition to index the document. It applies a" +
+    @Operation(summary = "answers a get petition to index the document. Firstly, it creates the index (deleting it if already exists), then it applies a" +
             " mapping an finally indexes to \"films\" index all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
             " whose paths must be provided via get parameter.")
     public void indexDocuments(@RequestParam String filmsPath,
@@ -62,6 +62,15 @@ public class IndexController {
                     indexOperations(filmsPath, ratingsPathOpt);
                 }
             };
+
+            try {
+                ClientCustomConfiguration.getClient().indices().delete(i -> {
+                    return i.index("films");
+                });
+                ClientCustomConfiguration.getClient().indices().create(i -> i.index("films"));
+            } catch(ElasticsearchException e) {
+                ClientCustomConfiguration.getClient().indices().create(i -> i.index("films"));
+            }
 
             ClientCustomConfiguration.getClient().indices().putMapping(_0 -> {
                 var req = _0.index("films");
@@ -78,19 +87,19 @@ public class IndexController {
                         .properties("isAdult", _1 -> _1
                                 .boolean_(_2 -> _2))
                         .properties("startYear", _1 -> _1
-                                .integer(_2 -> _2.index(false)))
+                                .integer(_2 -> _2.nullValue(0)))
                         .properties("endYear", _1 -> _1
                                 .integer(_2 -> _2))
                         .properties("runtimeMinutes", _1 -> _1
-                                .integer(_2 -> _2.index(false)))
+                                .integer(_2 -> _2.nullValue(0)))
                         .properties("genres", _1 -> _1
                                 .keyword(_2 -> _2));
 
                 if(ratingsPathOpt.isPresent())  {
                     req.properties("averageRating", _1 -> _1
-                                    .double_(_2 -> _2.index(false)))
+                                    .double_(_2 -> _2.nullValue(0.0)))
                         .properties("numVotes", _1 -> _1
-                            .integer(_2 -> _2.index(false)));
+                            .integer(_2 -> _2.nullValue(0)));
                 }
 
                 return req;

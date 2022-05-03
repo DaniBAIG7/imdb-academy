@@ -1,7 +1,9 @@
 package co.empathy.academy.search.controllers;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
@@ -91,10 +93,18 @@ public class QueryController {
     public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
-
-                                 @RequestParam(required = false, name = "agg") Optional<String> aggField
+                                 @RequestParam(required = false) Optional<String> gte,
+                                 @RequestParam(required = false, name = "agg") Optional<String> aggField,
+                                 @RequestParam(required = false) Optional<Integer> from,
+                                 @RequestParam(required = false) Optional<Integer> size
                                  ) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest req = SearchRequest.of(_0 -> {
+
+            if(from.isPresent())
+                _0.from(from.get());
+            if(size.isPresent())
+                _0.size(size.get());
+
             var wholeQuery = QueryBuilders.bool();
 
             if(q.isPresent()) {
@@ -104,12 +114,17 @@ public class QueryController {
                                 .fields("primaryTitle", "originalTitle").query(q.get())
                         )
                 );
+
             }
 
             if(type.isPresent())
-                wholeQuery = putFilter(type.get(), "titleType", wholeQuery);
+                putFilter(type.get(), "titleType", wholeQuery);
             if(genre.isPresent())
-                wholeQuery = putFilter(genre.get(), "genres", wholeQuery);
+                putFilter(genre.get(), "genres", wholeQuery);
+            if(gte.isPresent())
+                wholeQuery.filter(_1 -> _1.range(_2 ->
+                        _2.field("averageRating").gte(JsonData.of(gte.get()))));
+
 
             //Assigning query to films index and placing it into request
             var wholeReq = _0.index("films").query(new Query(wholeQuery.build()));
@@ -121,24 +136,25 @@ public class QueryController {
                );
             }
 
+            _0.sort(_1 -> _1.field(_2 -> _2.field("averageRating").order(SortOrder.Desc)));
+
             return wholeReq;
         });
 
-        SearchResponse response;
-
         try {
-            response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
+            var response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
+            return getResultsAsString(aggField, response);
         } catch (IOException e) {
             throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
             throw new IndexNotFoundException("films", i);
         }
 
-        return getResultsAsString(aggField, response);
+
     }
 
-    private BoolQuery.Builder putFilter(List<String> values, String field, BoolQuery.Builder builder) {
-        return builder.filter(_1 -> _1.terms(_2 -> _2
+    private void putFilter(List<String> values, String field, BoolQuery.Builder builder) {
+        builder.filter(_1 -> _1.terms(_2 -> _2
                         .field(field).terms(_3 -> _3
                                 .value(values.stream().map(FieldValue::of).toList())
                         )
@@ -146,7 +162,7 @@ public class QueryController {
         );
     }
 
-    private List<Map<String, Object>> launchQuery(Query q, String index) throws ElasticsearchConnectionException, IndexNotFoundException {
+    private List<Map<String, Object>> launchQuery(Query q, String index) {
         SearchRequest searchRequest = new SearchRequest.Builder().query(q).index(index).build();
 
         try {
