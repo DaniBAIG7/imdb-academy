@@ -1,6 +1,7 @@
 package co.empathy.academy.search.controllers;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.analysis.PatternReplaceTokenFilter;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -78,18 +79,18 @@ public class IndexController {
                                 .keyword(_2 -> _2))
                         .properties("primaryTitle", _1 -> _1
                                 .text(_2 -> _2.boost(8.0)
-                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4.boost(9.0)))
+                                        .fields("raw", _3 -> _3.keyword(_4 -> _4.boost(9.0)))
                                 ))
                         .properties("originalTitle", _1 -> _1
                                 .text(_2 -> _2.boost(9.8)
-                                        .analyzer("standard").fields("raw", _3 -> _3.keyword(_4 -> _4.boost(10.0)))
+                                        .fields("raw", _3 -> _3.keyword(_4 -> _4.boost(10.0)))
                                 ))
                         .properties("isAdult", _1 -> _1
                                 .boolean_(_2 -> _2))
                         .properties("startYear", _1 -> _1
-                                .integer(_2 -> _2.nullValue(0)))
+                                .text(_2 -> _2))
                         .properties("endYear", _1 -> _1
-                                .integer(_2 -> _2))
+                                .text(_2 -> _2))
                         .properties("runtimeMinutes", _1 -> _1
                                 .integer(_2 -> _2.nullValue(0)))
                         .properties("genres", _1 -> _1
@@ -106,6 +107,31 @@ public class IndexController {
 
                 }
             );
+
+            ClientCustomConfiguration.getClient().indices().close(_0 -> _0.index("films"));
+
+            ClientCustomConfiguration.getClient().indices().putSettings(_0 -> _0
+                    .index("films")
+                    .settings(_1 -> _1
+                            .analysis(_2 -> _2
+                                    .tokenizer("number_tokenizer", _3 -> _3
+                                            .definition(_4 -> _4
+                                                    .pattern(_5 -> _5
+                                                            .pattern("[^\\d{4}]")
+                                                            .flags("")
+                                                            .group(-1)
+                                                    )
+                                            )
+                                    )
+                                    .analyzer("number_pattern_analyzer",
+                                            _3 -> _3.custom(_4 -> _4
+                                                    .tokenizer("number_tokenizer")
+                                    )
+                            )
+                    )
+            ));
+
+            ClientCustomConfiguration.getClient().indices().open(_0 -> _0.index("films"));
 
             bulkOperationTask.start(); //Starts the bulk operation thread so navigator won't get stuck without response
 
