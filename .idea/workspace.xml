@@ -131,6 +131,9 @@
       <workItem from="1651049152515" duration="6093000" />
       <workItem from="1651057699729" duration="736000" />
       <workItem from="1651058638201" duration="24150000" />
+      <workItem from="1651649701030" duration="5317000" />
+      <workItem from="1651736711273" duration="14661000" />
+      <workItem from="1651827894470" duration="11621000" />
     </task>
     <servers />
   </component>
@@ -138,31 +141,23 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/QueryController.java</url>
-          <line>129</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/util/JsonParser.java</url>
-          <line>93</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
         <PinnedItemInfo parentTag="java.util.HashMap$Node" memberName="key" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.BulkResponse" memberName="items" />
-        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.search.HitsMetadata" memberName="hits" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery" memberName="tieBreaker" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchRequest" memberName="query" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem" memberName="error" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate" memberName="buckets" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery" memberName="must" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.Query" memberName="_kind" />
       </pinned-members>
     </pin-to-top-manager>
+    <watches-manager>
+      <configuration name="SpringBootApplicationConfigurationType">
+        <watch expression="i.response.error" language="JAVA" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

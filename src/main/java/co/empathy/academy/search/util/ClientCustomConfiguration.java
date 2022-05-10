@@ -11,7 +11,7 @@ public class ClientCustomConfiguration {
 
     // Create the low-level client
     private static RestClient restClient = RestClient.builder(
-            new HttpHost("localhost", 9200)).build();
+            new HttpHost("localhost", 9200), new HttpHost("elasticsearch", 9200)).build();
 
     // Create the transport with a Jackson mapper
     private static ElasticsearchTransport transport = new RestClientTransport(

@@ -1,15 +1,9 @@
 package co.empathy.academy.search.controllers;
 
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.FieldSort;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -98,12 +92,12 @@ public class QueryController {
                                  @RequestParam(required = false) Optional<Integer> from,
                                  @RequestParam(required = false) Optional<Integer> size
                                  ) throws ElasticsearchConnectionException, IndexNotFoundException {
-        SearchRequest req = SearchRequest.of(_0 -> {
+        SearchRequest req = SearchRequest.of(indexRequest -> {
 
             if(from.isPresent())
-                _0.from(from.get());
+                indexRequest.from(from.get());
             if(size.isPresent())
-                _0.size(size.get());
+                indexRequest.size(size.get());
 
             var wholeQuery = QueryBuilders.bool();
 
@@ -111,10 +105,16 @@ public class QueryController {
 
                 wholeQuery.must(_1 -> _1
                         .multiMatch(_2 -> _2
-                                .fields("primaryTitle", "originalTitle").query(q.get())
+                                .fields("primaryTitle", "originalTitle", "startYear^2")
+                                .operator(Operator.And)
+                                .fuzziness("2")
+                                .analyzer("simple")
+                                .type(TextQueryType.BestFields)
+                                .query(q.get())
+                                .tieBreaker(0.3)
+
                         )
                 );
-
             }
 
             if(type.isPresent())
@@ -125,9 +125,20 @@ public class QueryController {
                 wholeQuery.filter(_1 -> _1.range(_2 ->
                         _2.field("averageRating").gte(JsonData.of(gte.get()))));
 
+            var functionQuery = QueryBuilders.functionScore();
+            functionQuery.query(new Query(wholeQuery.build())).functions(FunctionScore.of(function ->
+                    function.scriptScore(
+                            scrScoreFn -> scrScoreFn.script(
+                                    Script.of(script -> script.inline(
+                                            inlineScr -> inlineScr.source(
+                                                    "Math.log(2 + doc['averageRating'].value) * doc['numVotes'].value"
+                                            )
+                                    )))
+                    )
+            ));
 
             //Assigning query to films index and placing it into request
-            var wholeReq = _0.index("films").query(new Query(wholeQuery.build()));
+            var wholeReq = indexRequest.index("films").query(new Query(functionQuery.build()));
 
             if(aggField.isPresent()) {
                wholeReq.aggregations(
@@ -136,7 +147,6 @@ public class QueryController {
                );
             }
 
-            _0.sort(_1 -> _1.field(_2 -> _2.field("averageRating").order(SortOrder.Desc)));
 
             return wholeReq;
         });
