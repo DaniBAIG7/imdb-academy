@@ -31,11 +31,11 @@ import java.util.*;
 public class QueryController {
 
     @GetMapping("/terms/{index}/_search")
-    @Parameter(name="index", description="Name of the index over which to throw the terms query")
+    @Parameter(name = "index", description = "Name of the index over which to throw the terms query")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+            @ApiResponse(responseCode = "200", description = "Terms query result", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = {@Content(mediaType = "application/json")})
     })
     @Operation(summary = "Throws a terms query for a given index. Requires a field and several terms to match it.")
     public List<Map<String, Object>> termsQuery(@PathVariable String index, @RequestParam String field, @RequestParam String values) throws ElasticsearchConnectionException, IndexNotFoundException {
@@ -46,11 +46,11 @@ public class QueryController {
     }
 
     @GetMapping("/term/{index}/_search")
-    @Parameter(name="index", description="Name of the index over which to throw the term query")
+    @Parameter(name = "index", description = "Name of the index over which to throw the term query")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Terms query result", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+            @ApiResponse(responseCode = "200", description = "Terms query result", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = {@Content(mediaType = "application/json")})
     })
     @Operation(summary = "Throws a term query for a given index. Requires a field and a term to match it.")
     public List<Map<String, Object>> termQuery(@PathVariable String index, @RequestParam String field, @RequestParam String value) throws ElasticsearchConnectionException, IndexNotFoundException {
@@ -59,11 +59,11 @@ public class QueryController {
     }
 
     @GetMapping("/multimatch/{index}/_search")
-    @Parameter(name="index", description="Name of the index over which to throw the multimatch query")
+    @Parameter(name = "index", description = "Name of the index over which to throw the multimatch query")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Multimatch query result", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+            @ApiResponse(responseCode = "200", description = "Multimatch query result", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = {@Content(mediaType = "application/json")})
     })
     @Operation(summary = "Throws a multimatch query for a given index. Requires several fields and a value to match them.")
     public List<Map<String, Object>> multiMatchQuery(@PathVariable String index, @RequestParam String fields, @RequestParam String value) throws ElasticsearchConnectionException, IndexNotFoundException {
@@ -72,79 +72,88 @@ public class QueryController {
         return launchQuery(new Query(q), index);
     }
 
-    
+
     @GetMapping("/search")
-    @Parameter(name="q", description="Allows creating a must-match query over the \"primaryTitle\" value from the database according to the provided value.", required = false)
-    @Parameter(name="type", description="Allows creating a filter for the query over the \"type\" field.", required = false)
-    @Parameter(name="genre", description="Allows creating a filter for the query over the \"genre\" field.", required = false)
-    @Parameter(name="agg", description="Allows providing a certain field to perform an aggregation over it and define it as query result.", required = false)
+    @Parameter(name = "q", description = "Allows creating a must-match query over the \"primaryTitle\" value from the database according to the provided value.", required = true)
+    @Parameter(name = "type", description = "Allows creating a filter for the query over the \"type\" field.", required = false)
+    @Parameter(name = "genre", description = "Allows creating a filter for the query over the \"genre\" field.", required = false)
+    @Parameter(name = "agg", description = "Allows providing a certain field to perform an aggregation over it and define it as query result.", required = false)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Search query result", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "400", description = "Index does not exist", content = { @Content(mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = { @Content(mediaType = "application/json")})
+            @ApiResponse(responseCode = "200", description = "Search query result", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", description = "Index does not exist", content = {@Content(mediaType = "application/json")}),
+            @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = {@Content(mediaType = "application/json")})
     })
     @Operation(summary = "Throws a bool query combining the different parameters")
-    public String aggFilterQuery(@RequestParam(required = false) Optional<String> q,
+    public String aggFilterQuery(@RequestParam(required = true) Optional<String> q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
                                  @RequestParam(required = false) Optional<String> gte,
                                  @RequestParam(required = false, name = "agg") Optional<String> aggField,
                                  @RequestParam(required = false) Optional<Integer> from,
                                  @RequestParam(required = false) Optional<Integer> size
-                                 ) throws ElasticsearchConnectionException, IndexNotFoundException {
+    ) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest req = SearchRequest.of(indexRequest -> {
 
-            if(from.isPresent())
+            if (from.isPresent())
                 indexRequest.from(from.get());
-            if(size.isPresent())
+            if (size.isPresent())
                 indexRequest.size(size.get());
 
-            var wholeQuery = QueryBuilders.bool();
+            var boolNestedQuery = QueryBuilders.bool();
 
             if(q.isPresent()) {
+                if (q.get() != "") {
+                    boolNestedQuery.must(mustClause -> mustClause
+                            .multiMatch(_2 -> _2
+                                    .fields("primaryTitle^20",
+                                            "primaryTitle.raw^50",
+                                            "originalTitle^30",
+                                            "originalTitle.raw^60")
+                                    .type(TextQueryType.BestFields)
+                                    .operator(Operator.Or)
+                                    .query(q.get())
+                                    .tieBreaker(0.3)
+                            )
+                    ).should(shouldClause -> shouldClause
+                            .match(matchQuery -> matchQuery
+                                    .field("startYear")
+                                    .query(q.get())
+                                    .boost(50F)
+                            )
+                    );
+                }
 
-                wholeQuery.must(_1 -> _1
-                        .multiMatch(_2 -> _2
-                                .fields("primaryTitle", "originalTitle", "startYear^2")
-                                .operator(Operator.And)
-                                .fuzziness("2")
-                                .analyzer("simple")
-                                .type(TextQueryType.BestFields)
-                                .query(q.get())
-                                .tieBreaker(0.3)
-
-                        )
-                );
             }
 
-            if(type.isPresent())
-                putFilter(type.get(), "titleType", wholeQuery);
-            if(genre.isPresent())
-                putFilter(genre.get(), "genres", wholeQuery);
-            if(gte.isPresent())
-                wholeQuery.filter(_1 -> _1.range(_2 ->
-                        _2.field("averageRating").gte(JsonData.of(gte.get()))));
+
+            if (type.isPresent())
+                putFilter(type.get(), "titleType", boolNestedQuery);
+            if (genre.isPresent())
+                putFilter(genre.get(), "genres", boolNestedQuery);
+            if (gte.isPresent())
+                boolNestedQuery.filter(filter -> filter.range(rangeFilter ->
+                        rangeFilter.field("averageRating").gte(JsonData.of(gte.get()))));
+
 
             var functionQuery = QueryBuilders.functionScore();
-            functionQuery.query(new Query(wholeQuery.build())).functions(FunctionScore.of(function ->
-                    function.scriptScore(
-                            scrScoreFn -> scrScoreFn.script(
-                                    Script.of(script -> script.inline(
-                                            inlineScr -> inlineScr.source(
-                                                    "Math.log(2 + doc['averageRating'].value) * doc['numVotes'].value"
-                                            )
-                                    )))
-                    )
-            ));
+            functionQuery.query(new Query(boolNestedQuery.build())).functions(
+                    FunctionScore.of(functionOne ->
+                            functionOne.fieldValueFactor(fValFactor -> fValFactor.field("averageRating")
+                                    .modifier(FieldValueFactorModifier.Log2p))),
+
+                    FunctionScore.of(functionTwo ->
+                            functionTwo.fieldValueFactor(fValFactor -> fValFactor.field("numVotes")
+                                    .factor(0.0001))
+                    )).scoreMode(FunctionScoreMode.Multiply).boostMode(FunctionBoostMode.Sum);
 
             //Assigning query to films index and placing it into request
             var wholeReq = indexRequest.index("films").query(new Query(functionQuery.build()));
 
-            if(aggField.isPresent()) {
-               wholeReq.aggregations(
-                       aggField.get() + "_agg",
-                       AggregationBuilders.terms().field(aggField.get()).build()._toAggregation()
-               );
+            if (aggField.isPresent()) {
+                wholeReq.aggregations(
+                        aggField.get() + "_agg",
+                        AggregationBuilders.terms().field(aggField.get()).build()._toAggregation()
+                );
             }
 
 
@@ -188,6 +197,7 @@ public class QueryController {
 
     /**
      * Private method that manages response for the term, terms and multimatch queries
+     *
      * @param response
      * @return a json with the response
      */
@@ -195,11 +205,11 @@ public class QueryController {
         ObjectMapper mapper = new ObjectMapper();
         List<Map<String, Object>> result = new ArrayList<>();
 
-        for(Hit<JsonData> h: response.hits().hits()) {
+        for (Hit<JsonData> h : response.hits().hits()) {
             Map<String, Object> m = null;
             try {
                 m = mapper.readValue(h.source().toString(), Map.class);
-            } catch (JsonProcessingException e ) {
+            } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
 
@@ -214,7 +224,7 @@ public class QueryController {
 
         String toRet;
 
-        if(aggFieldOpt.isPresent()) {
+        if (aggFieldOpt.isPresent()) {
             toRet = parseAggregations(aggFieldOpt.get(), response);
         } else {
             toRet = response.hits().hits().stream()
@@ -222,6 +232,7 @@ public class QueryController {
                     .map(x -> Json.createObjectBuilder()
                             .add("id", x.id())
                             .add("source", x.source().toJson())
+                            .add("score", x.score())
                             .build()).toList().toString();
         }
 

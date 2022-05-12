@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @RequestMapping(value="/admin/api")
 public class IndexController {
 
+
     /**
      * This method answers a get petition to index the document. Firstly it creates an index, then it applies a
      * mapping an finally indexes all the documents contained in the films .tsv.
@@ -73,65 +74,16 @@ public class IndexController {
                 ClientCustomConfiguration.getClient().indices().create(i -> i.index("films"));
             }
 
-            ClientCustomConfiguration.getClient().indices().putMapping(_0 -> {
-                var req = _0.index("films");
-                        req.properties("titleType", _1 -> _1
-                                .keyword(_2 -> _2))
-                        .properties("primaryTitle", _1 -> _1
-                                .text(_2 -> _2.boost(8.0)
-                                        .fields("raw", _3 -> _3.keyword(_4 -> _4.boost(9.0)))
-                                ))
-                        .properties("originalTitle", _1 -> _1
-                                .text(_2 -> _2.boost(9.8)
-                                        .fields("raw", _3 -> _3.keyword(_4 -> _4.boost(10.0)))
-                                ))
-                        .properties("isAdult", _1 -> _1
-                                .boolean_(_2 -> _2))
-                        .properties("startYear", _1 -> _1
-                                .text(_2 -> _2))
-                        .properties("endYear", _1 -> _1
-                                .text(_2 -> _2))
-                        .properties("runtimeMinutes", _1 -> _1
-                                .integer(_2 -> _2.nullValue(0)))
-                        .properties("genres", _1 -> _1
-                                .keyword(_2 -> _2));
-
-                if(ratingsPathOpt.isPresent())  {
-                    req.properties("averageRating", _1 -> _1
-                                    .double_(_2 -> _2.nullValue(0.0)))
-                        .properties("numVotes", _1 -> _1
-                            .integer(_2 -> _2.nullValue(0)));
-                }
-
-                return req;
-
-                }
-            );
-
             ClientCustomConfiguration.getClient().indices().close(_0 -> _0.index("films"));
 
-            ClientCustomConfiguration.getClient().indices().putSettings(_0 -> _0
-                    .index("films")
-                    .settings(_1 -> _1
-                            .analysis(_2 -> _2
-                                    .tokenizer("number_tokenizer", _3 -> _3
-                                            .definition(_4 -> _4
-                                                    .pattern(_5 -> _5
-                                                            .pattern("[^\\d{4}]")
-                                                            .flags("")
-                                                            .group(-1)
-                                                    )
-                                            )
-                                    )
-                                    .analyzer("number_pattern_analyzer",
-                                            _3 -> _3.custom(_4 -> _4
-                                                    .tokenizer("number_tokenizer")
-                                    )
-                            )
-                    )
-            ));
+            var analyzer = getClass().getClassLoader().getResourceAsStream("analyzers.json");
+            ClientCustomConfiguration.getClient().indices().putSettings(_0 -> _0.index("films").withJson(analyzer));
 
             ClientCustomConfiguration.getClient().indices().open(_0 -> _0.index("films"));
+
+            var mapping = getClass().getClassLoader().getResourceAsStream("mappings.json");
+            ClientCustomConfiguration.getClient().indices().putMapping(_0 -> _0.index("films").withJson(mapping));
+
 
             bulkOperationTask.start(); //Starts the bulk operation thread so navigator won't get stuck without response
 
