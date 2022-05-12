@@ -1,0 +1,51 @@
+{
+  "properties": {
+    "titleType": {
+      "type": "keyword"
+    },
+    "primaryTitle": {
+      "type": "text",
+      "analyzer": "custom_fkinawesome_analyzer",
+      "fields": {
+        "raw": {
+          "type": "keyword"
+        }
+      }
+
+    },
+    "originalTitle": {
+      "type": "text",
+      "analyzer": "custom_fkinawesome_analyzer",
+      "fields": {
+        "raw": {
+          "type": "keyword"
+        }
+      }
+    },
+    "isAdult": {
+      "type": "boolean"
+    },
+    "startYear": {
+      "analyzer": "number_pattern_analyzer",
+      "type": "text"
+    },
+    "endYear": {
+      "type": "text"
+    },
+    "runtimeMinutes": {
+      "type": "integer",
+      "null_value": 0
+    },
+    "genres": {
+      "type": "keyword"
+    },
+    "averageRating": {
+      "type": "double",
+      "null_value": 0
+    },
+    "numVotes": {
+      "type": "integer",
+      "null_value": 0
+    }
+  }
+}

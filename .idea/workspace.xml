@@ -51,11 +51,14 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/resources/static" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources/static" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers" />
       <recent name="$PROJECT_DIR$/src/main/resources/static" />
@@ -133,7 +136,7 @@
       <workItem from="1651058638201" duration="24150000" />
       <workItem from="1651649701030" duration="5317000" />
       <workItem from="1651736711273" duration="14661000" />
-      <workItem from="1651827894470" duration="11621000" />
+      <workItem from="1651827894470" duration="48333000" />
     </task>
     <servers />
   </component>
@@ -141,6 +144,15 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/QueryController.java</url>
+          <line>221</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
