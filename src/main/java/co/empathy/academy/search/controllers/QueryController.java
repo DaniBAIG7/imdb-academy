@@ -83,7 +83,7 @@ public class QueryController {
             @ApiResponse(responseCode = "400", description = "Index does not exist", content = {@Content(mediaType = "application/json")}),
             @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = {@Content(mediaType = "application/json")})
     })
-    @Operation(summary = "Throws a bool query combining the different parameters")
+    @Operation(summary = "Throws a query combining the different parameters, boosted depending on the rating and number of votes.")
     public String aggFilterQuery(@RequestParam(required = true) Optional<String> q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
@@ -93,6 +93,8 @@ public class QueryController {
                                  @RequestParam(required = false) Optional<Integer> size
     ) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest req = SearchRequest.of(indexRequest -> {
+
+            indexRequest.index("films");
 
             if (from.isPresent())
                 indexRequest.from(from.get());
@@ -170,6 +172,23 @@ public class QueryController {
         }
 
 
+    }
+
+    @GetMapping("id_search")
+    public String getIndividualFilm(@RequestParam(required=true) String id) throws ElasticsearchConnectionException, IndexNotFoundException {
+        SearchRequest s = SearchRequest.of(request -> request
+                .index("films")
+                .query(query -> query.match(matchQuery -> matchQuery.field("id").query(id)))
+        );
+
+        try {
+            var response = ClientCustomConfiguration.getClient().search(s, JsonData.class);
+            return getResultsAsString(Optional.ofNullable(null), response);
+        } catch (IOException e) {
+            throw new ElasticsearchConnectionException(e);
+        } catch (ElasticsearchException i) {
+            throw new IndexNotFoundException("films", i);
+        }
     }
 
     private void putFilter(List<String> values, String field, BoolQuery.Builder builder) {
