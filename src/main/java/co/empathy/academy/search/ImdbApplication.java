@@ -1,6 +1,5 @@
 package co.empathy.academy.search;
 
-import co.empathy.academy.search.util.tsv_merger.TSVMerger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
