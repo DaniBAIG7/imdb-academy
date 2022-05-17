@@ -53,13 +53,14 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/resources/static" />
     <property name="nodejs_package_manager_path" value="npm" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="settings.editor.selected.configurable" value="project.propCompiler" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/main/resources/static" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources/cleaning" />
       <recent name="$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers" />
       <recent name="$PROJECT_DIR$/src/main/resources/static" />
     </key>
@@ -72,6 +73,8 @@
     <configuration name="ImdbApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
       <module name="search" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="co.empathy.academy.search.ImdbApplication" />
+      <option name="VM_PARAMETERS" value="-Xmx4096m" />
+      <option name="ALTERNATIVE_JRE_PATH" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -93,6 +96,11 @@
       </deployment>
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Docker.docker-compose.yml: Compose Deployment" />
+      <item itemvalue="Docker.Dockerfile" />
+      <item itemvalue="Spring Boot.ImdbApplication" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Docker.docker-compose.yml: Compose Deployment" />
@@ -136,7 +144,12 @@
       <workItem from="1651058638201" duration="24150000" />
       <workItem from="1651649701030" duration="5317000" />
       <workItem from="1651736711273" duration="14661000" />
-      <workItem from="1651827894470" duration="48333000" />
+      <workItem from="1651827894470" duration="49052000" />
+      <workItem from="1652348466817" duration="572000" />
+      <workItem from="1652350015932" duration="4772000" />
+      <workItem from="1652426905834" duration="30000" />
+      <workItem from="1652426941677" duration="1800000" />
+      <workItem from="1652775006289" duration="743000" />
     </task>
     <servers />
   </component>
@@ -144,15 +157,6 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/QueryController.java</url>
-          <line>221</line>
-          <option name="timeStamp" value="14" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
