@@ -152,7 +152,7 @@ public class QueryController {
             if (aggField.isPresent()) {
                 wholeReq.aggregations(
                         aggField.get() + "_agg",
-                        AggregationBuilders.terms().field(aggField.get()).build()._toAggregation()
+                        AggregationBuilders.terms().field(aggField.get()).size(1000).build()._toAggregation()
                 );
             }
 

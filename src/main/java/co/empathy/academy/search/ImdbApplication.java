@@ -11,13 +11,6 @@ public class ImdbApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ImdbApplication.class, args);
-		try {
-			TSVMerger.cleanAkas("src/main/resources/cleaning/title.basics.sorted.cleaned.tsv",
-					"src/main/resources/cleaning/title.akas.sorted.tsv",
-					"src/main/resources/cleaning/title.akas.sorted.cleaned.tsv");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 }
