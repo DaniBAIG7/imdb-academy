@@ -19,15 +19,15 @@ Once cloned, we go into that folder and compose the Docker container, using the 
 cd imdb-academy
 docker-compose up
 ```
-By doing that, we have the container running with the necessary version of ElasticSearch.
+By doing that, we have the system running with the necessary versions of both the Elasticsearch and the API containers.
 
-Now it's time to start the Spring project. For that we can use the following commands:
-```
-mvn compile
-mvn spring-boot:run
-```
+**IMPORTANT:**
+If a new version of the system is pulled from this repository and you want the latest changes to be reflected in your container, you should do the following:
+- Stop the running containers (if they are running, of course)
+- Rebuild the Docker system with the following command, forcing it to not use cached information: ``` docker-compose up --build -d ```
+
 ## Data necessary for working with the API
-There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in [this link](https://datasets.imdbws.com/); _title\_basics.tsv_ and _title\_ratings.tsv_.
+There are several files used in the project that need to be downloaded to get it working. Those files are IMDb datasets that can be found in [this link](https://datasets.imdbws.com/); _**TBD**_
 
 ## Instructions
 Firstly, you should fill Elasticsearch by indexing (at least once) all the documents on the documents mentioned earlier.
