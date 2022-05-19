@@ -152,6 +152,9 @@
       <workItem from="1652775006289" duration="3037000" />
       <workItem from="1652778817988" duration="40000" />
       <workItem from="1652778955084" duration="325000" />
+      <workItem from="1652780870369" duration="73000" />
+      <workItem from="1652781060979" duration="672000" />
+      <workItem from="1652947939418" duration="367000" />
     </task>
     <servers />
   </component>
@@ -159,6 +162,15 @@
     <option name="version" value="3" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/co/empathy/academy/search/controllers/QueryController.java</url>
+          <line>184</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
@@ -166,6 +178,7 @@
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.BulkResponse" memberName="items" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery" memberName="tieBreaker" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchRequest" memberName="query" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchResponse" memberName="hits" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem" memberName="error" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate" memberName="buckets" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery" memberName="must" />
