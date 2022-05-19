@@ -178,7 +178,7 @@ public class QueryController {
     public String getIndividualFilm(@RequestParam(required=true) String id) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest s = SearchRequest.of(request -> request
                 .index("films")
-                .query(query -> query.match(matchQuery -> matchQuery.field("id").query(id)))
+                .query(query -> query.match(matchQuery -> matchQuery.field("_id").query(id)))
         );
 
         try {
@@ -192,8 +192,8 @@ public class QueryController {
     }
 
     private void putFilter(List<String> values, String field, BoolQuery.Builder builder) {
-        builder.filter(_1 -> _1.terms(_2 -> _2
-                        .field(field).terms(_3 -> _3
+        builder.filter(queryField -> queryField.terms(termsFilter -> termsFilter
+                        .field(field).terms(filter -> filter
                                 .value(values.stream().map(FieldValue::of).toList())
                         )
                 ) //Parseo de los typeFilters a FieldValue
