@@ -1,19 +1,13 @@
 package co.empathy.academy.search.controllers;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.analysis.PatternReplaceTokenFilter;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.elasticsearch.indices.IndexState;
-import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
-import co.empathy.academy.search.exception.ElasticsearchConnectionException;
-import co.empathy.academy.search.exception.IndexAlreadyExistsException;
-import co.empathy.academy.search.exception.IndexNotFoundException;
-import co.empathy.academy.search.exception.NoRatingsException;
+import co.empathy.academy.search.exception.*;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
-import co.empathy.academy.search.util.JsonParser;
-import co.empathy.academy.search.util.JsonReference;
+import co.empathy.academy.search.util.indexutils.BatchReader;
+import co.empathy.academy.search.util.indexutils.IndexingUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -21,22 +15,21 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Tag(name = "Index controller", description = "Allows the creation and deletion of indexes, as well as document indexing for certain," +
         "locally stored TSV with all the information to be used in the subsequent searches to ElasticClient.")
 @RestController
 @RequestMapping(value="/admin/api")
 public class IndexController {
-
+    private static final Logger logger = LoggerFactory.getLogger(IndexController.class);
 
     /**
      * This method answers a get petition to index the document. Firstly it creates an index, then it applies a
@@ -56,12 +49,17 @@ public class IndexController {
             " mapping an finally indexes to \"films\" index all the documents contained in the films .tsv (and optionally the ratings .tsv)," +
             " whose paths must be provided via get parameter.")
     public void indexDocuments(@RequestParam String filmsPath,
-                               @RequestParam(name = "ratingsPath", required = false) Optional<String> ratingsPathOpt) {
+                               @RequestParam String ratingsPath,
+                               @RequestParam String akasPath,
+                               @RequestParam String crewPath,
+                               @RequestParam String episodesPath,
+                               @RequestParam String principalPath,
+                               @RequestParam String nameBasicsPath) {
         try {
 
             Thread bulkOperationTask = new Thread() {
                 public void run() {
-                    indexOperations(filmsPath, ratingsPathOpt);
+                    bulkOperations(filmsPath, ratingsPath, akasPath, crewPath, episodesPath, principalPath, nameBasicsPath);
                 }
             };
 
@@ -154,109 +152,46 @@ public class IndexController {
         }
     }
 
-    /**
-     * This method reads all the two different documents provided their paths; Then invokes bulkOperations to do the
-     * parsing and launch the bulk.
-     * @param filmsPath
-     * @param ratingsPathOpt
-     */
-    private void indexOperations(String filmsPath, Optional<String> ratingsPathOpt) {
-        List<String> parsedFilmsDocument = null;
-        Optional<List<String>> parsedRatingsDocument = null;
+    private void bulkOperations(String filmsPath,
+                                String ratingsPath,
+                                String akasPath,
+                                String crewPath,
+                                String episodesPath,
+                                String principalPath,
+                                String nameBasicsPath) {
+
+        int batchSize = 25000;
+
         try {
-            parsedFilmsDocument = Files.readAllLines(Path.of(filmsPath));
-            System.out.println("Films document read");
-            if(ratingsPathOpt.isPresent()) {
-                parsedRatingsDocument = Optional.of(Files.readAllLines(Path.of(ratingsPathOpt.get())));
-                System.out.println("Ratings document read");
-                bulkOperations(parsedFilmsDocument, Optional.of(parsedRatingsDocument.get()));
-            } else {
-                bulkOperations(parsedFilmsDocument, Optional.empty());
+            logger.info("Started indexing");
+            var batchReader = new BatchReader(filmsPath, ratingsPath, akasPath, crewPath,
+                    episodesPath, principalPath, nameBasicsPath, batchSize);
+
+            while(!batchReader.hasFinished()) {
+                var batch = batchReader.getBatch();
+
+                ClientCustomConfiguration.getClient().bulk(bulkRequest -> bulkRequest
+                        .operations(batch.stream()
+                                .map(x ->
+                                        BulkOperation.of(_1 -> _1
+                                                .index(_2 -> _2
+                                                        .index("films")
+                                                        .document(x.json())
+                                                        .id(x.id())
+                                                )
+                                        )
+                                ).toList())
+                );
+
+                logger.info("Done bulk");
             }
 
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("Indexed");
+            batchReader.close();
+        } catch(IOException | ElasticsearchException e) {
+            throw new InternalServerException(e);
         }
     }
 
-    private void bulkOperations(List<String> filmsDocument, Optional<List<String>> ratingsDocument) {
-        //I'm sorry for this method ;,)
-
-        JsonParser jParser;
-        Optional<Map<String, String>> ratingsMap;
-
-        if(!ratingsDocument.isEmpty()) {
-            jParser = new JsonParser(filmsDocument.get(0).split("\t"), Optional.of(ratingsDocument.get().get(0).split("\t")));
-            Map<String, String> auxMap = new HashMap<String, String>();
-
-            ratingsDocument.get().forEach((value) -> auxMap.put(value.split("\t")[0], value));
-            System.out.println("Ratings parsed");
-
-            ratingsMap = Optional.of(auxMap);
-        } else {
-            jParser = new JsonParser(filmsDocument.get(0).split("\t"), Optional.empty());
-            ratingsMap = Optional.empty();
-        }
-
-        final int BULK_OPERATIONS = 25000;
-
-        int documentLength = filmsDocument.size(); //In fact, any of the two documents could do since they have the same lines
-
-        List<JsonReference> subset;
-        int documentsIndexed = 0;
-        int lastIndex = 1;
-
-        while(documentsIndexed < documentLength) {
-
-            int newIndex = lastIndex + BULK_OPERATIONS;
-            boolean lastBatch = false;
-
-            if(newIndex > (documentLength - 1)) {
-                newIndex = documentLength - 1;
-                lastBatch = true;
-            }
-
-            if(!ratingsDocument.isEmpty()) {
-                List<JsonReference> auxSubset = new LinkedList<>();
-                for(int i = lastIndex; i < newIndex; i++) {
-                    try {
-                        String id = filmsDocument.get(i).split("\t")[0];
-                        auxSubset.add(jParser.biParse(filmsDocument.get(i),
-                                Optional.ofNullable(ratingsMap.get().get(id))));
-                    } catch (NoRatingsException e) {
-                        e.printStackTrace();
-                    }
-                }
-                subset = auxSubset;
-            } else {
-                subset = filmsDocument.subList(lastIndex, newIndex)
-                        .stream().map(jParser::parse).toList();
-            }
-
-
-            if(BULK_OPERATIONS / subset.size() == 1.0 || lastBatch) {
-                launchBulk(subset);
-                lastIndex += BULK_OPERATIONS;
-                documentsIndexed += BULK_OPERATIONS;
-            }
-
-        }
-    }
-
-    private void launchBulk(List<JsonReference> subset) {
-        BulkResponse bulkResponse = null;
-        try {
-            bulkResponse = ClientCustomConfiguration.getClient().bulk(_0 -> _0
-                    .operations(subset.stream().map(_1 -> BulkOperation.of(
-                            _2 -> _2.index(_3 -> _3.index("films")
-                                    .id(_1.getId())
-                                    .document(_1.getJson()))
-                    )).toList()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("Done bulk");
-    }
 
 }

@@ -1,25 +1,21 @@
 package co.empathy.academy.search.controllers;
 
 import co.elastic.clients.elasticsearch._types.*;
-import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import co.empathy.academy.search.util.queryutils.ResultParser;
 import co.empathy.academy.search.exception.ElasticsearchConnectionException;
 import co.empathy.academy.search.exception.IndexNotFoundException;
 import co.empathy.academy.search.util.ClientCustomConfiguration;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.json.Json;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -40,7 +36,7 @@ public class QueryController {
     @Operation(summary = "Throws a terms query for a given index. Requires a field and several terms to match it.")
     public List<Map<String, Object>> termsQuery(@PathVariable String index, @RequestParam String field, @RequestParam String values) throws ElasticsearchConnectionException, IndexNotFoundException {
         String[] valuesArray = values.split(",");
-        var fieldValues = Arrays.stream(valuesArray).map(v -> FieldValue.of(v)).toList();
+        var fieldValues = Arrays.stream(valuesArray).map(FieldValue::of).toList();
         var q = QueryBuilders.terms().field(field).terms(TermsQueryField.of(t -> t.value(fieldValues))).build();
         return launchQuery(new Query(q), index);
     }
@@ -92,6 +88,7 @@ public class QueryController {
                                  @RequestParam(required = false) Optional<Integer> from,
                                  @RequestParam(required = false) Optional<Integer> size
     ) throws ElasticsearchConnectionException, IndexNotFoundException {
+
         SearchRequest req = SearchRequest.of(indexRequest -> {
 
             indexRequest.index("films");
@@ -103,50 +100,13 @@ public class QueryController {
 
             var boolNestedQuery = QueryBuilders.bool();
 
-            if(q.isPresent()) {
-                if (q.get() != "") {
-                    boolNestedQuery.must(mustClause -> mustClause
-                            .multiMatch(_2 -> _2
-                                    .fields("primaryTitle^20",
-                                            "primaryTitle.raw^50",
-                                            "originalTitle^30",
-                                            "originalTitle.raw^60")
-                                    .type(TextQueryType.BestFields)
-                                    .operator(Operator.Or)
-                                    .query(q.get())
-                                    .tieBreaker(0.3)
-                            )
-                    ).should(shouldClause -> shouldClause
-                            .match(matchQuery -> matchQuery
-                                    .field("startYear")
-                                    .query(q.get())
-                                    .boost(50F)
-                            )
-                    );
-                }
-
+            if(q.isPresent() && !q.get().equals("")) {
+                constructBoolQuery(boolNestedQuery, q.get());
             }
 
+            putFilters(type, genre, gte, boolNestedQuery);
 
-            if (type.isPresent())
-                putFilter(type.get(), "titleType", boolNestedQuery);
-            if (genre.isPresent())
-                putFilter(genre.get(), "genres", boolNestedQuery);
-            if (gte.isPresent())
-                boolNestedQuery.filter(filter -> filter.range(rangeFilter ->
-                        rangeFilter.field("averageRating").gte(JsonData.of(gte.get()))));
-
-
-            var functionQuery = QueryBuilders.functionScore();
-            functionQuery.query(new Query(boolNestedQuery.build())).functions(
-                    FunctionScore.of(functionOne ->
-                            functionOne.fieldValueFactor(fValFactor -> fValFactor.field("averageRating")
-                                    .modifier(FieldValueFactorModifier.Log2p))),
-
-                    FunctionScore.of(functionTwo ->
-                            functionTwo.fieldValueFactor(fValFactor -> fValFactor.field("numVotes")
-                                    .factor(0.0001))
-                    )).scoreMode(FunctionScoreMode.Multiply).boostMode(FunctionBoostMode.Sum);
+            var functionQuery = wrapQueryWithRelevanceFunctionQuery(boolNestedQuery);
 
             //Assigning query to films index and placing it into request
             var wholeReq = indexRequest.index("films").query(new Query(functionQuery.build()));
@@ -158,13 +118,16 @@ public class QueryController {
                 );
             }
 
+//           var suggesters = Map.of("termsuggester", FieldSuggesterBuilders.term().field("primaryTitle").build()._toFieldSuggester());
+//            wholeReq.suggest(suggestBuilder -> suggestBuilder.text(q.get()).suggesters(suggesters)
+//            );
 
             return wholeReq;
         });
 
         try {
             var response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
-            return getResultsAsString(aggField, response);
+            return ResultParser.getResultsAsString(aggField, response);
         } catch (IOException e) {
             throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
@@ -172,6 +135,52 @@ public class QueryController {
         }
 
 
+    }
+
+    private void constructBoolQuery(BoolQuery.Builder builder, String q) {
+        builder.must(mustClause -> mustClause
+                .multiMatch(multiMatchQuery -> multiMatchQuery
+                        .fields("primaryTitle^20",
+                                "primaryTitle.raw^50",
+                                "originalTitle^30",
+                                "originalTitle.raw^60")
+                        .type(TextQueryType.BestFields)
+                        .operator(Operator.Or)
+                        .query(q)
+                        .tieBreaker(0.3)
+                )
+        ).should(shouldClause -> shouldClause
+                .match(matchQuery -> matchQuery
+                        .field("startYear")
+                        .query(q)
+                        .boost(60F)
+                )
+        );
+    }
+
+    private void putFilters(Optional<List<String>> type,
+                            Optional<List<String>> genre,
+                            Optional<String> gte,
+                            BoolQuery.Builder query) {
+        type.ifPresent(strings -> putFilter(strings, "titleType", query));
+        genre.ifPresent(strings -> putFilter(strings, "genres", query));
+        gte.ifPresent(s -> query.filter(filter -> filter.range(rangeFilter ->
+                rangeFilter.field("averageRating").gte(JsonData.of(s)))));
+    }
+
+    private FunctionScoreQuery.Builder wrapQueryWithRelevanceFunctionQuery(BoolQuery.Builder query) {
+        var functionQuery = QueryBuilders.functionScore();
+        functionQuery.query(new Query(query.build())).functions(
+                FunctionScore.of(functionOne ->
+                        functionOne.fieldValueFactor(fValFactor -> fValFactor.field("averageRating")
+                                .modifier(FieldValueFactorModifier.Log2p))),
+
+                FunctionScore.of(functionTwo ->
+                        functionTwo.fieldValueFactor(fValFactor -> fValFactor.field("numVotes")
+                                .factor(0.0001))
+                )).scoreMode(FunctionScoreMode.Multiply).boostMode(FunctionBoostMode.Sum);
+
+        return functionQuery;
     }
 
     @GetMapping("id_search")
@@ -183,7 +192,7 @@ public class QueryController {
 
         try {
             var response = ClientCustomConfiguration.getClient().search(s, JsonData.class);
-            return getResultsAsString(Optional.ofNullable(null), response);
+            return ResultParser.getResultsAsString(Optional.ofNullable(null), response);
         } catch (IOException e) {
             throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
@@ -205,73 +214,12 @@ public class QueryController {
 
         try {
             SearchResponse<JsonData> res = ClientCustomConfiguration.getClient().search(searchRequest, JsonData.class);
-            return getResults(res);
+            return ResultParser.getResults(res);
         } catch (IOException e) {
             throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
             throw new IndexNotFoundException(index, i);
         }
     }
-
-
-    /**
-     * Private method that manages response for the term, terms and multimatch queries
-     *
-     * @param response
-     * @return a json with the response
-     */
-    private List<Map<String, Object>> getResults(SearchResponse<JsonData> response) {
-        ObjectMapper mapper = new ObjectMapper();
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        for (Hit<JsonData> h : response.hits().hits()) {
-            Map<String, Object> m = null;
-            try {
-                m = mapper.readValue(h.source().toString(), Map.class);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-
-            result.add(m);
-        }
-
-        return result;
-    }
-
-    public String getResultsAsString(Optional<String> aggFieldOpt, SearchResponse<JsonData> response) {
-
-
-        String toRet;
-
-        if (aggFieldOpt.isPresent()) {
-            toRet = parseAggregations(aggFieldOpt.get(), response);
-        } else {
-            toRet = response.hits().hits().stream()
-                    .filter(x -> x.source() != null)
-                    .map(x -> Json.createObjectBuilder()
-                            .add("id", x.id())
-                            .add("source", x.source().toJson())
-                            .add("score", x.score())
-                            .build()).toList().toString();
-        }
-
-        return toRet;
-
-    }
-
-    private String parseAggregations(String aggField, SearchResponse<JsonData> response) {
-        String aggName = aggField + "_agg";
-        var list = response.aggregations().get(aggName).sterms().buckets().array();
-
-        var buckets = list.stream()
-                .map(x -> Json.createObjectBuilder().add("key", x.key()).add("doc_count", x.docCount()).build());
-
-        var result = Json.createArrayBuilder();
-
-        buckets.forEach(result::add);
-
-        return result.build().toString();
-    }
-
 
 }
