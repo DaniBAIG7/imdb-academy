@@ -164,6 +164,12 @@ public class QueryController {
                         .query(q)
                         .boost(60F)
                 )
+        ).should(secondShouldClause -> secondShouldClause
+                .match(matchQuery -> matchQuery
+                        .field("titleType")
+                        .query("movie")
+                        .boost(100F)
+                )
         );
     }
 
@@ -197,7 +203,7 @@ public class QueryController {
         functionQuery.query(new Query(query.build())).functions(
                 FunctionScore.of(functionOne ->
                         functionOne.fieldValueFactor(fValFactor -> fValFactor.field("averageRating")
-                                .modifier(FieldValueFactorModifier.Log2p))),
+                                .modifier(FieldValueFactorModifier.Ln2p))),
 
                 FunctionScore.of(functionTwo ->
                         functionTwo.fieldValueFactor(fValFactor -> fValFactor.field("numVotes")
