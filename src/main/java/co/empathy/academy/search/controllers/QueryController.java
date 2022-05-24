@@ -6,6 +6,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
+import co.empathy.academy.search.util.HighClientCustomConfiguration;
+import co.empathy.academy.search.util.queryutils.HiClientOps;
 import co.empathy.academy.search.util.queryutils.ResultParser;
 import co.empathy.academy.search.exception.ElasticsearchConnectionException;
 import co.empathy.academy.search.exception.IndexNotFoundException;
@@ -84,6 +86,7 @@ public class QueryController {
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
                                  @RequestParam(required = false) Optional<String> gte,
+                                 @RequestParam(required = false) Optional<String> director,
                                  @RequestParam(required = false, name = "agg") Optional<String> aggField,
                                  @RequestParam(required = false) Optional<Integer> from,
                                  @RequestParam(required = false) Optional<Integer> size
@@ -104,7 +107,7 @@ public class QueryController {
                 constructBoolQuery(boolNestedQuery, q.get());
             }
 
-            putFilters(type, genre, gte, boolNestedQuery);
+            putFilters(type, genre, director, gte, boolNestedQuery);
 
             var functionQuery = wrapQueryWithRelevanceFunctionQuery(boolNestedQuery);
 
@@ -127,7 +130,12 @@ public class QueryController {
 
         try {
             var response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
-            return ResultParser.getResultsAsString(aggField, response);
+            if(response.hits().hits().size() == 0) {
+                return HiClientOps.run(q.get());
+            } else {
+                return ResultParser.getResultsAsString(aggField, response);
+            }
+
         } catch (IOException e) {
             throw new ElasticsearchConnectionException(e);
         } catch (ElasticsearchException i) {
@@ -136,6 +144,7 @@ public class QueryController {
 
 
     }
+
 
     private void constructBoolQuery(BoolQuery.Builder builder, String q) {
         builder.must(mustClause -> mustClause
@@ -160,12 +169,27 @@ public class QueryController {
 
     private void putFilters(Optional<List<String>> type,
                             Optional<List<String>> genre,
+                            Optional<String> director,
                             Optional<String> gte,
                             BoolQuery.Builder query) {
         type.ifPresent(strings -> putFilter(strings, "titleType", query));
         genre.ifPresent(strings -> putFilter(strings, "genres", query));
+        putNestedFilter(director, "directors.nconst", query);
         gte.ifPresent(s -> query.filter(filter -> filter.range(rangeFilter ->
                 rangeFilter.field("averageRating").gte(JsonData.of(s)))));
+    }
+
+    private void putNestedFilter(Optional<String> value, String field, BoolQuery.Builder query) {
+        value.ifPresent(presentValue -> query.filter(filterBuilder -> filterBuilder
+                .nested(nestedFilter -> nestedFilter
+                        .path(field.split("\\.")[0])
+                        .query(queryBuilder -> queryBuilder
+                                .term(termQuery -> termQuery.field(field).value(presentValue))
+                        )
+                )
+        )
+        );
+
     }
 
     private FunctionScoreQuery.Builder wrapQueryWithRelevanceFunctionQuery(BoolQuery.Builder query) {
@@ -210,6 +234,7 @@ public class QueryController {
     }
 
     private List<Map<String, Object>> launchQuery(Query q, String index) {
+
         SearchRequest searchRequest = new SearchRequest.Builder().query(q).index(index).build();
 
         try {

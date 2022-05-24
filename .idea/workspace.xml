@@ -160,7 +160,9 @@
       <workItem from="1653290108864" duration="8901000" />
       <workItem from="1653300787699" duration="2289000" />
       <workItem from="1653303194160" duration="155000" />
-      <workItem from="1653303587699" duration="1805000" />
+      <workItem from="1653303587699" duration="1869000" />
+      <workItem from="1653376806991" duration="4094000" />
+      <workItem from="1653381120933" duration="7439000" />
     </task>
     <servers />
   </component>
@@ -171,17 +173,16 @@
     <pin-to-top-manager>
       <pinned-members>
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.search.TermSuggester" memberName="field" />
-        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery" memberName="tieBreaker" />
-        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchResponse" memberName="hits" />
-        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery" memberName="must" />
-        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.Query" memberName="_kind" />
         <PinnedItemInfo parentTag="co.empathy.academy.search.util.JsonReference" memberName="json" />
         <PinnedItemInfo parentTag="java.util.HashMap$Node" memberName="key" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.BulkResponse" memberName="items" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchRequest" memberName="suggest" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery" memberName="tieBreaker" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchRequest" memberName="query" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.SearchResponse" memberName="hits" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem" memberName="error" />
         <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate" memberName="buckets" />
+        <PinnedItemInfo parentTag="co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery" memberName="must" />
       </pinned-members>
     </pin-to-top-manager>
     <watches-manager>
