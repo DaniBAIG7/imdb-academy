@@ -53,13 +53,13 @@ public class IndexController {
                                @RequestParam String akasPath,
                                @RequestParam String crewPath,
                                @RequestParam String episodesPath,
-                               @RequestParam String principalPath,
+                               @RequestParam String principalsPath,
                                @RequestParam String nameBasicsPath) {
         try {
 
             Thread bulkOperationTask = new Thread() {
                 public void run() {
-                    bulkOperations(filmsPath, ratingsPath, akasPath, crewPath, episodesPath, principalPath, nameBasicsPath);
+                    bulkOperations(filmsPath, ratingsPath, akasPath, crewPath, episodesPath, principalsPath, nameBasicsPath);
                 }
             };
 
@@ -157,7 +157,7 @@ public class IndexController {
                                 String akasPath,
                                 String crewPath,
                                 String episodesPath,
-                                String principalPath,
+                                String principalsPath,
                                 String nameBasicsPath) {
 
         int batchSize = 25000;
@@ -165,7 +165,7 @@ public class IndexController {
         try {
             logger.info("Started indexing");
             var batchReader = new BatchReader(filmsPath, ratingsPath, akasPath, crewPath,
-                    episodesPath, principalPath, nameBasicsPath, batchSize);
+                    episodesPath, principalsPath, nameBasicsPath, batchSize);
 
             while(!batchReader.hasFinished()) {
                 var batch = batchReader.getBatch();
