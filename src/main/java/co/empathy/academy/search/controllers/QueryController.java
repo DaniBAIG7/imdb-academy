@@ -159,7 +159,7 @@ public class QueryController {
                 .match(matchQuery -> matchQuery
                         .field("startYear")
                         .query(q)
-                        .boost(60F)
+                        .boost(100F)
                 )
         ).should(secondShouldClause -> secondShouldClause
                 .match(matchQuery -> matchQuery
