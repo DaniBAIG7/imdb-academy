@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
-import co.empathy.academy.search.util.HighClientCustomConfiguration;
 import co.empathy.academy.search.util.queryutils.HiClientOps;
 import co.empathy.academy.search.util.queryutils.ResultParser;
 import co.empathy.academy.search.exception.ElasticsearchConnectionException;
@@ -82,7 +81,7 @@ public class QueryController {
             @ApiResponse(responseCode = "500", description = "Could not connect to Elasticsearch", content = {@Content(mediaType = "application/json")})
     })
     @Operation(summary = "Throws a query combining the different parameters, boosted depending on the rating and number of votes.")
-    public String aggFilterQuery(@RequestParam(required = true) Optional<String> q,
+    public String aggFilterQuery(@RequestParam String q,
                                  @RequestParam(required = false) Optional<List<String>> type,
                                  @RequestParam(required = false) Optional<List<String>> genre,
                                  @RequestParam(required = false) Optional<String> gte,
@@ -101,15 +100,13 @@ public class QueryController {
             if (size.isPresent())
                 indexRequest.size(size.get());
 
-            var boolNestedQuery = QueryBuilders.bool();
+            var nestedQuery = QueryBuilders.bool();
 
-            if(q.isPresent() && !q.get().equals("")) {
-                constructBoolQuery(boolNestedQuery, q.get());
-            }
+            constructBoolQuery(nestedQuery, q);
 
-            putFilters(type, genre, director, gte, boolNestedQuery);
+            putFilters(type, genre, director, gte, nestedQuery);
 
-            var functionQuery = wrapQueryWithRelevanceFunctionQuery(boolNestedQuery);
+            var functionQuery = wrapQueryWithRelevanceFunctionQuery(nestedQuery);
 
             //Assigning query to films index and placing it into request
             var wholeReq = indexRequest.index("films").query(new Query(functionQuery.build()));
@@ -121,17 +118,13 @@ public class QueryController {
                 );
             }
 
-//           var suggesters = Map.of("termsuggester", FieldSuggesterBuilders.term().field("primaryTitle").build()._toFieldSuggester());
-//            wholeReq.suggest(suggestBuilder -> suggestBuilder.text(q.get()).suggesters(suggesters)
-//            );
-
             return wholeReq;
         });
 
         try {
             var response = ClientCustomConfiguration.getClient().search(req, JsonData.class);
-            if(response.hits().hits().size() == 0) {
-                return HiClientOps.run(q.get());
+            if(response.hits().hits().isEmpty() && !q.equals("")) {
+                return HiClientOps.run(q);
             } else {
                 return ResultParser.getResultsAsString(aggField, response);
             }
@@ -147,17 +140,21 @@ public class QueryController {
 
 
     private void constructBoolQuery(BoolQuery.Builder builder, String q) {
-        builder.must(mustClause -> mustClause
-                .multiMatch(multiMatchQuery -> multiMatchQuery
-                        .fields("primaryTitle^20",
-                                "primaryTitle.raw^50",
-                                "originalTitle^30",
-                                "originalTitle.raw^60")
-                        .type(TextQueryType.BestFields)
-                        .operator(Operator.Or)
-                        .query(q)
-                        .tieBreaker(0.3)
-                )
+        builder.must(mustClause -> {
+            if(q.equals("")) {
+                return mustClause.matchAll(matchAllQuery -> matchAllQuery);
+            }
+            return mustClause.multiMatch(multiMatchQuery -> multiMatchQuery
+                    .fields("primaryTitle^20",
+                            "primaryTitle.raw^50",
+                            "originalTitle^40",
+                            "originalTitle.raw^60")
+                    .type(TextQueryType.BestFields)
+                    .operator(Operator.Or)
+                    .query(q)
+                    .tieBreaker(0.3)
+            );
+        }
         ).should(shouldClause -> shouldClause
                 .match(matchQuery -> matchQuery
                         .field("startYear")
@@ -208,13 +205,13 @@ public class QueryController {
                 FunctionScore.of(functionTwo ->
                         functionTwo.fieldValueFactor(fValFactor -> fValFactor.field("numVotes")
                                 .factor(0.0001))
-                )).scoreMode(FunctionScoreMode.Multiply).boostMode(FunctionBoostMode.Sum);
+                )).scoreMode(FunctionScoreMode.Multiply).boostMode(FunctionBoostMode.Multiply);
 
         return functionQuery;
     }
 
     @GetMapping("id_search")
-    public String getIndividualFilm(@RequestParam(required=true) String id) throws ElasticsearchConnectionException, IndexNotFoundException {
+    public String getIndividualFilm(@RequestParam String id) throws ElasticsearchConnectionException, IndexNotFoundException {
         SearchRequest s = SearchRequest.of(request -> request
                 .index("films")
                 .query(query -> query.match(matchQuery -> matchQuery.field("_id").query(id)))
