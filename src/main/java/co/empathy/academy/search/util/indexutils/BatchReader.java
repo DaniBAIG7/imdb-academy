@@ -57,7 +57,6 @@ public class BatchReader {
         this.crewHeaders = Arrays.stream(this.crewReader.readLine().split(DELIMITER.pattern())).toList();
         this.episodesHeaders = Arrays.stream(this.episodesPath.readLine().split(DELIMITER.pattern())).toList();
         this.principalHeaders = Arrays.stream(this.principalReader.readLine().split(DELIMITER.pattern())).toList();
-        //this.nameHeaders = Arrays.stream(nameBasics.get("nconst")).toList();
         this.nameHeaders = null;
     }
 

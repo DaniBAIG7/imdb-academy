@@ -6,6 +6,7 @@ import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,20 @@ import java.util.Optional;
 
 public class ResultParser {
 
-    private static String parseAggregations(String aggField, SearchResponse<JsonData> response) {
+    private static JsonArrayBuilder parseHits(SearchResponse<JsonData> response) {
+        var hitsResult = Json.createArrayBuilder();
+        response.hits().hits().stream()
+                .filter(x -> x.source() != null)
+                .map(x -> Json.createObjectBuilder()
+                        .add("id", x.id())
+                        .add("source", x.source().toJson())
+                        .add("score", x.score())
+                        .build()).toList().forEach(hitsResult::add);
+
+        return hitsResult;
+    }
+
+    private static JsonArrayBuilder parseAggregations(String aggField, SearchResponse<JsonData> response) {
         String aggName = aggField + "_agg";
         var list = response.aggregations().get(aggName).sterms().buckets().array();
 
@@ -25,7 +39,7 @@ public class ResultParser {
 
         buckets.forEach(result::add);
 
-        return result.build().toString();
+        return result;
     }
 
     private static String parseSuggestions(String suggField, SearchResponse<JsonData> response) {
@@ -64,25 +78,11 @@ public class ResultParser {
 
     public static String getResultsAsString(Optional<String> aggFieldOpt,
                                      SearchResponse<JsonData> response) {
-        String toRet;
+        var builder = Json.createObjectBuilder();
+        builder.add("hits", parseHits(response));
+        aggFieldOpt.ifPresent(agg -> builder.add("aggs", parseAggregations(agg, response)));
 
-        if (aggFieldOpt.isPresent()) {
-            toRet = parseAggregations(aggFieldOpt.get(), response);
-        } else {
-            toRet = response.hits().hits().stream()
-                    .filter(x -> x.source() != null)
-                    .map(x -> Json.createObjectBuilder()
-                            .add("id", x.id())
-                            .add("source", x.source().toJson())
-                            .add("score", x.score())
-                            .build()).toList().toString();
-        }
-
-//        if(suggField.isPresent()) {
-//            toRet += parseSuggestions(suggField.get(), response);
-//        }
-
-        return toRet;
+        return builder.build().toString();
 
     }
 }
