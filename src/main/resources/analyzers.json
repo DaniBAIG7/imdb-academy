@@ -28,17 +28,17 @@
         "custom_synonyms_filter": {
           "type" : "synonym",
           "synonyms" : [
-            "i => 1 => one",
-            "ii => 2 => two",
-            "iii => 3 => three",
-            "iv => 4 => four",
-            "v => 5 => five",
-            "vi => 6 => six",
-            "vii => 7 => seven",
-            "viii => 8 => eight",
-            "ix => 9 => nine",
-            "x => 10 => ten",
-            "xi => eleven => 11"
+            "i,one => 1",
+            "ii,two => 2",
+            "iii,three => 3",
+            "iv,four => 4",
+            "v,five => 5",
+            "vi,six => 6",
+            "vii,seven => 7",
+            "viii,eight => 8",
+            "ix,nine => 9",
+            "x,ten => 10",
+            "xi,eleven => 11"
           ]
         }
       },
